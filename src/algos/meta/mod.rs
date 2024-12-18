@@ -106,8 +106,14 @@ where
     let nb_traces = target.len();
     // Check whether the fom
     if let Some(f) = initial_cache.get_from_cv(target, target) {
-        debug!("Formula found in cache");
-        return Some(f);
+        // Due to hash collisions, the formula may not be right; we check that
+        // the formula has the right characteristic vector.
+        if f.eval(traces).accepted_vec() == target {
+            debug!("Formula found in cache");
+            return Some(f);
+        } else {
+            debug!("Hash collision found a wrong formula {f} for target {target:?}; continuing");
+        }
     }
     if nb_traces > 128 {
         split_and_solve_non_overlapping(traces, operators, initial_cache, target, params)
