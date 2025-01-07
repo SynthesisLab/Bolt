@@ -116,11 +116,16 @@ impl CharSeq {
     /// LTL Next operator (X)
     #[inline]
     pub(crate) fn next(mut self) -> Self {
-        self.head >>= 1;
         let out_bit = self.cycle & 1;
-        self.head |= out_bit << (self.head_len - 1);
-        self.cycle >>= 1;
-        self.cycle |= out_bit << (self.cycle_len - 1);
+        if self.head_len > 0 {
+            self.head >>= 1;
+            self.head |= out_bit << (self.head_len - 1);
+        }
+
+        if self.cycle_len > 0 {
+            self.cycle >>= 1;
+            self.cycle |= out_bit << (self.cycle_len - 1);
+        }
 
         self
     }
@@ -170,8 +175,8 @@ impl CharSeq {
         let CharSeq {
             head: h1,
             cycle: c1,
-            head_len,
-            cycle_len,
+            head_len: hl1,
+            cycle_len: cl1,
         } = self;
         let CharSeq {
             head: h2,
@@ -179,13 +184,13 @@ impl CharSeq {
             head_len: hl2,
             cycle_len: cl2,
         } = rhs;
-        assert_eq!(head_len, hl2);
-        assert_eq!(cycle_len, cl2);
+        assert_eq!(hl1, hl2);
+        assert_eq!(cl1, cl2);
         // Technique: double the cycles, and compute the regular Until
         // on them. Then, transmit a single bit to the head, and compute
         // until from there.
-        let mut long_c1 = c1 as u128 | (c1 as u128) << 64;
-        let mut long_c2 = c2 as u128 | (c2 as u128) << 64;
+        let mut long_c1 = c1 as u128 | (c1 as u128) << cl1;
+        let mut long_c2 = c2 as u128 | (c2 as u128) << cl2;
         long_c2 |= long_c1 & (long_c2 >> 1);
         long_c1 &= long_c1 >> 1;
         long_c2 |= long_c1 & (long_c2 >> 2);
@@ -199,11 +204,12 @@ impl CharSeq {
         long_c2 |= long_c1 & (long_c2 >> 32);
         long_c1 &= long_c1 >> 32;
         long_c2 |= long_c1 & (long_c2 >> 64);
-        let cycle_res = long_c2 as u64;
+        println!("c2 {long_c2}");
+        let cycle_res = restrict_to_first_k_bits(long_c2 as u64, cl1);
         let exit_bit = cycle_res & 1;
 
-        let mut x = h1;
-        let mut y = h2;
+        let mut x = h1 as u128;
+        let mut y = h2 as u128 | (exit_bit as u128) << hl2;
         y |= x & (y >> 1);
         x &= x >> 1;
         y |= x & (y >> 2);
@@ -215,11 +221,15 @@ impl CharSeq {
         y |= x & (y >> 16);
         x &= x >> 16;
         y |= x & (y >> 32);
+        x &= x >> 32;
+        y |= x & (y >> 64);
+        let head_res = restrict_to_first_k_bits(y as u64, hl1);
+
         CharSeq {
-            head: todo!(),
+            head: head_res,
             cycle: cycle_res,
-            head_len,
-            cycle_len,
+            head_len: hl1,
+            cycle_len: cl1,
         }
     }
 }
@@ -309,8 +319,8 @@ mod tests {
 
     fn random_seq() -> CharSeq {
         let mut rng = thread_rng();
-        let head_len = rng.gen_range(1..64);
-        let cycle_len = rng.gen_range(1..64);
+        let head_len = rng.gen_range(0..64);
+        let cycle_len = rng.gen_range(0..64);
         random_seq_with_len(head_len, cycle_len, &mut rng)
     }
 
@@ -409,6 +419,8 @@ mod tests {
     fn expand_u() {
         for _ in 0..100 {
             let (x, y) = random_pair();
+            println!("x = {x}, y = {y}");
+            println!("{}, {}", U(x, y), y | (x & X(U(x, y))));
             assert_eq!(U(x, y), y | (x & X(U(x, y))));
         }
     }
