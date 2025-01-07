@@ -204,7 +204,6 @@ impl CharSeq {
         long_c2 |= long_c1 & (long_c2 >> 32);
         long_c1 &= long_c1 >> 32;
         long_c2 |= long_c1 & (long_c2 >> 64);
-        println!("c2 {long_c2}");
         let cycle_res = restrict_to_first_k_bits(long_c2 as u64, cl1);
         let exit_bit = cycle_res & 1;
 
@@ -430,8 +429,6 @@ mod tests {
     fn expand_u() {
         for _ in 0..100 {
             let (x, y) = random_pair();
-            println!("x = {x}, y = {y}");
-            println!("{}, {}", U(x, y), y | (x & X(U(x, y))));
             assert_eq!(U(x, y), y | (x & X(U(x, y))));
         }
     }
