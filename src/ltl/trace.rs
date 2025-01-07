@@ -29,14 +29,30 @@ pub struct Trace {
 }
 
 fn parse_trace(trace: &str) -> Option<Trace> {
-    let seq_pred: Vec<_> = trace
+    println!("{trace}");
+    let mut pieces = trace.split('|');
+    let predicates_heads = pieces
+        .next()?
         .split(';')
+        .filter(|s| !s.is_empty())
         .map(|s| s.split(',').map(|v| v == "1").collect::<Vec<_>>())
-        .collect();
+        .collect::<Vec<_>>();
+    let predicates_cycle = pieces
+        .next()?
+        .split(';')
+        .filter(|s| !s.is_empty())
+        .map(|s| s.split(',').map(|v| v == "1").collect::<Vec<_>>())
+        .collect::<Vec<_>>();
 
-    let n_pred = seq_pred.first()?.len();
+    let n_pred = predicates_heads.first()?.len();
     let alphabet = (0..n_pred)
-        .map(|i| CharSeq::from_iter(seq_pred.iter().map(|v| v[i])))
+        .map(|i| {
+            (
+                predicates_heads.iter().map(|v| v[i]),
+                predicates_cycle.iter().map(|v| v[i]),
+            )
+                .into()
+        })
         .collect();
 
     Some(Trace { alphabet })

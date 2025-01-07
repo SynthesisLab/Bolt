@@ -249,24 +249,35 @@ impl Display for CharSeq {
     }
 }
 
-impl FromIterator<bool> for CharSeq {
-    fn from_iter<T: IntoIterator<Item = bool>>(iter: T) -> Self {
-        let mut x: u64 = 0;
-        let mut len = 0;
-        iter.into_iter().enumerate().for_each(|(i, b)| {
-            if i >= 64 {
-                panic!("Trace is too long! (max len 64)");
-            }
-            if b {
-                x |= 1 << i;
-            }
-            len += 1;
-        });
-        todo!()
-        // CharSeq {
-        //     values: x,
-        //     length: len,
-        // }
+fn u64_and_len_from_iter(iter: impl Iterator<Item = bool>) -> (u64, usize) {
+    let mut x: u64 = 0;
+    let mut len = 0;
+    iter.enumerate().for_each(|(i, b)| {
+        if i >= 64 {
+            panic!("Trace is too long! (max len 64)");
+        }
+        if b {
+            x |= 1 << i;
+        }
+        len += 1;
+    });
+    (x, len)
+}
+
+impl<It1, It2> From<(It1, It2)> for CharSeq
+where
+    It1: Iterator<Item = bool>,
+    It2: Iterator<Item = bool>,
+{
+    fn from((it1, it2): (It1, It2)) -> Self {
+        let (head, head_len) = u64_and_len_from_iter(it1);
+        let (cycle, cycle_len) = u64_and_len_from_iter(it2);
+        CharSeq {
+            head,
+            cycle,
+            head_len,
+            cycle_len,
+        }
     }
 }
 
