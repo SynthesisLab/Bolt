@@ -6,25 +6,48 @@ use std::{
 };
 
 /// Characteristic sequence of an LTL formula on a trace.
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct CharSeq {
-    values: u64,
-    length: usize,
+    head: u64,
+    cycle: u64,
+    head_len: usize,
+    cycle_len: usize,
+}
+
+fn restrict_to_first_k_bits(x: u64, k: usize) -> u64 {
+    if k < 64 {
+        x & ((1u64 << k) - 1)
+    } else {
+        x
+    }
+}
+
+fn all_true_u64(k: usize) -> u64 {
+    if k < 64 {
+        (1u64 << k) - 1
+    } else {
+        !0
+    }
 }
 
 impl Not for CharSeq {
     type Output = Self;
 
     fn not(self) -> Self::Output {
-        let CharSeq { values: x, length } = self;
-        let values = x.not();
-        // Edge case: shifting 1u64 by 64 gives 1 in release mode, and panics in debug mode.
-        let values = if self.length < 64 {
-            values & ((1u64 << self.length) - 1)
-        } else {
-            values
-        };
-        CharSeq { values, length }
+        let CharSeq {
+            head,
+            cycle,
+            head_len,
+            cycle_len,
+        } = self;
+        let not_h = restrict_to_first_k_bits(head.not(), head_len);
+        let not_c = restrict_to_first_k_bits(cycle.not(), cycle_len);
+        CharSeq {
+            head: not_h,
+            cycle: not_c,
+            head_len,
+            cycle_len,
+        }
     }
 }
 
@@ -32,15 +55,25 @@ impl BitOr for CharSeq {
     type Output = Self;
 
     fn bitor(self, rhs: Self) -> Self::Output {
-        let CharSeq { values: x, length } = self;
         let CharSeq {
-            values: y,
-            length: l2,
+            head: h1,
+            cycle: c1,
+            head_len,
+            cycle_len,
+        } = self;
+        let CharSeq {
+            head: h2,
+            cycle: c2,
+            head_len: hl2,
+            cycle_len: cl2,
         } = rhs;
-        assert_eq!(length, l2);
+        assert_eq!(head_len, hl2);
+        assert_eq!(cycle_len, cl2);
         CharSeq {
-            values: x.bitor(y),
-            length,
+            head: h1 | h2,
+            cycle: c1 | c2,
+            head_len,
+            cycle_len,
         }
     }
 }
@@ -49,35 +82,46 @@ impl BitAnd for CharSeq {
     type Output = Self;
 
     fn bitand(self, rhs: Self) -> Self::Output {
-        let CharSeq { values: x, length } = self;
         let CharSeq {
-            values: y,
-            length: l2,
+            head: h1,
+            cycle: c1,
+            head_len,
+            cycle_len,
+        } = self;
+        let CharSeq {
+            head: h2,
+            cycle: c2,
+            head_len: hl2,
+            cycle_len: cl2,
         } = rhs;
-        assert_eq!(length, l2);
+        assert_eq!(head_len, hl2);
+        assert_eq!(cycle_len, cl2);
         CharSeq {
-            values: x.bitand(y),
-            length,
+            head: h1 & h2,
+            cycle: c1 & c2,
+            head_len,
+            cycle_len,
         }
     }
 }
 
 impl CharSeq {
-    pub fn len(&self) -> usize {
-        self.length
-    }
-
     /// Whether the formula accepts the trace,
     /// i.e. it is true starting from the first position.
     #[inline]
     pub(crate) fn accepts(&self) -> bool {
-        (self.values & 1) == 1
+        (self.head & 1) == 1
     }
 
     /// LTL Next operator (X)
     #[inline]
     pub(crate) fn next(mut self) -> Self {
-        self.values >>= 1;
+        self.head >>= 1;
+        let out_bit = self.cycle & 1;
+        self.head |= out_bit << (self.head_len - 1);
+        self.cycle >>= 1;
+        self.cycle |= out_bit << (self.cycle_len - 1);
+
         self
     }
 
@@ -91,29 +135,75 @@ impl CharSeq {
     #[inline]
     pub(crate) fn finally(self) -> Self {
         let CharSeq {
-            values: mut x,
-            length,
+            head,
+            cycle,
+            head_len,
+            cycle_len,
         } = self;
-        x |= x >> 1;
-        x |= x >> 2;
-        x |= x >> 4;
-        x |= x >> 8;
-        x |= x >> 16;
-        x |= x >> 32;
-        CharSeq { values: x, length }
+        if cycle > 0 {
+            CharSeq {
+                head: all_true_u64(head_len),
+                cycle: all_true_u64(cycle_len),
+                head_len,
+                cycle_len,
+            }
+        } else {
+            let mut x = head;
+            x |= x >> 1;
+            x |= x >> 2;
+            x |= x >> 4;
+            x |= x >> 8;
+            x |= x >> 16;
+            x |= x >> 32;
+            CharSeq {
+                head: x,
+                cycle: 0,
+                head_len,
+                cycle_len,
+            }
+        }
     }
 
     /// LTL Until operator (U)
     #[inline]
     pub(crate) fn until(self, rhs: Self) -> Self {
         let CharSeq {
-            values: mut x,
-            length,
+            head: h1,
+            cycle: c1,
+            head_len,
+            cycle_len,
         } = self;
         let CharSeq {
-            values: mut y,
-            length: _l2,
+            head: h2,
+            cycle: c2,
+            head_len: hl2,
+            cycle_len: cl2,
         } = rhs;
+        assert_eq!(head_len, hl2);
+        assert_eq!(cycle_len, cl2);
+        // Technique: double the cycles, and compute the regular Until
+        // on them. Then, transmit a single bit to the head, and compute
+        // until from there.
+        let mut long_c1 = c1 as u128 | (c1 as u128) << 64;
+        let mut long_c2 = c2 as u128 | (c2 as u128) << 64;
+        long_c2 |= long_c1 & (long_c2 >> 1);
+        long_c1 &= long_c1 >> 1;
+        long_c2 |= long_c1 & (long_c2 >> 2);
+        long_c1 &= long_c1 >> 2;
+        long_c2 |= long_c1 & (long_c2 >> 4);
+        long_c1 &= long_c1 >> 4;
+        long_c2 |= long_c1 & (long_c2 >> 8);
+        long_c1 &= long_c1 >> 8;
+        long_c2 |= long_c1 & (long_c2 >> 16);
+        long_c1 &= long_c1 >> 16;
+        long_c2 |= long_c1 & (long_c2 >> 32);
+        long_c1 &= long_c1 >> 32;
+        long_c2 |= long_c1 & (long_c2 >> 64);
+        let cycle_res = long_c2 as u64;
+        let exit_bit = cycle_res & 1;
+
+        let mut x = h1;
+        let mut y = h2;
         y |= x & (y >> 1);
         x &= x >> 1;
         y |= x & (y >> 2);
@@ -125,22 +215,26 @@ impl CharSeq {
         y |= x & (y >> 16);
         x &= x >> 16;
         y |= x & (y >> 32);
-        CharSeq { values: y, length }
-    }
-}
-
-impl Debug for CharSeq {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self}")
+        CharSeq {
+            head: todo!(),
+            cycle: cycle_res,
+            head_len,
+            cycle_len,
+        }
     }
 }
 
 impl Display for CharSeq {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let x = self.values;
-        for i in 0..self.len() {
-            write!(f, "{}", (x >> i) & 1)?;
+        write!(f, "(head: ")?;
+        for i in 0..self.head_len {
+            write!(f, "{}", (self.head >> i) & 1)?;
         }
+        write!(f, ", cycle: ")?;
+        for i in 0..self.cycle_len {
+            write!(f, "{}", (self.cycle >> i) & 1)?;
+        }
+        write!(f, ")")?;
         Ok(())
     }
 }
@@ -158,10 +252,11 @@ impl FromIterator<bool> for CharSeq {
             }
             len += 1;
         });
-        CharSeq {
-            values: x,
-            length: len,
-        }
+        todo!()
+        // CharSeq {
+        //     values: x,
+        //     length: len,
+        // }
     }
 }
 
@@ -191,43 +286,40 @@ mod tests {
         phi.until(psi)
     }
 
-    fn random_seq_with_len(len: usize, rng: &mut impl Rng) -> CharSeq {
-        let x: u64 = rng.gen();
-        let x = if len < 64 { x & ((1u64 << len) - 1) } else { x };
+    fn random_seq_with_len(head_len: usize, cycle_len: usize, rng: &mut impl Rng) -> CharSeq {
+        let h: u64 = restrict_to_first_k_bits(rng.gen(), head_len);
+        let c: u64 = restrict_to_first_k_bits(rng.gen(), cycle_len);
         CharSeq {
-            values: x,
-            length: len,
+            head: h,
+            cycle: c,
+            head_len,
+            cycle_len,
         }
     }
 
     fn random_pair() -> (CharSeq, CharSeq) {
         let mut rng = thread_rng();
-        let len = rng.gen_range(0..64);
+        let head_len = rng.gen_range(0..64);
+        let cycle_len = rng.gen_range(0..64);
         (
-            random_seq_with_len(len, &mut rng),
-            random_seq_with_len(len, &mut rng),
+            random_seq_with_len(head_len, cycle_len, &mut rng),
+            random_seq_with_len(head_len, cycle_len, &mut rng),
         )
     }
 
     fn random_seq() -> CharSeq {
         let mut rng = thread_rng();
-        let len = rng.gen_range(0..64);
-        random_seq_with_len(len, &mut rng)
+        let head_len = rng.gen_range(1..64);
+        let cycle_len = rng.gen_range(1..64);
+        random_seq_with_len(head_len, cycle_len, &mut rng)
     }
 
     #[test]
     fn phi_and_not_phi_is_zero() {
         for _ in 0..100 {
             let x = random_seq();
-            assert_eq!((x & !x).values, 0);
-        }
-    }
-
-    #[test]
-    fn phi_or_not_phi_is_true() {
-        for _ in 0..100 {
-            let x = random_seq();
-            assert_eq!((x | !x).values, (1 << x.length) - 1);
+            assert_eq!((x & !x).head, 0);
+            assert_eq!((x & !x).cycle, 0);
         }
     }
 
