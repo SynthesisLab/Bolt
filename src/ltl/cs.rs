@@ -110,7 +110,12 @@ impl CharSeq {
     /// i.e. it is true starting from the first position.
     #[inline]
     pub(crate) fn accepts(&self) -> bool {
-        (self.head & 1) == 1
+        if self.head_len > 0 {
+            (self.head & 1) == 1
+        } else {
+            assert!(self.cycle_len > 0);
+            (self.cycle & 1) == 1
+        }
     }
 
     /// LTL Next operator (X)
