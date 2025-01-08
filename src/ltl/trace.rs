@@ -33,9 +33,9 @@ pub struct Trace {
 fn parse_trace(trace: &str) -> Trace {
     debug!("{trace}");
     let mut pieces = trace.split('|');
-    let predicates_heads = pieces
+    let predicates_prefixes = pieces
         .next()
-        .expect("Missing predicates heads.")
+        .expect("Missing predicates prefixes.")
         .split(';')
         .filter(|s| !s.is_empty())
         .map(|s| s.split(',').map(|v| v == "1").collect::<Vec<_>>())
@@ -52,7 +52,7 @@ fn parse_trace(trace: &str) -> Trace {
     let alphabet = (0..n_pred)
         .map(|i| {
             (
-                predicates_heads.iter().map(|v| v[i]),
+                predicates_prefixes.iter().map(|v| v[i]),
                 predicates_cycle.iter().map(|v| v[i]),
             )
                 .into()

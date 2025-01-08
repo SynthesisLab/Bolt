@@ -8,9 +8,9 @@ use std::{
 /// Characteristic sequence of an LTL formula on a trace.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct CharSeq {
-    head: u64,
+    prefix: u64,
     cycle: u64,
-    head_len: usize,
+    prefix_len: usize,
     cycle_len: usize,
 }
 
@@ -35,17 +35,17 @@ impl Not for CharSeq {
 
     fn not(self) -> Self::Output {
         let CharSeq {
-            head,
+            prefix,
             cycle,
-            head_len,
+            prefix_len,
             cycle_len,
         } = self;
-        let not_h = restrict_to_first_k_bits(head.not(), head_len);
+        let not_p = restrict_to_first_k_bits(prefix.not(), prefix_len);
         let not_c = restrict_to_first_k_bits(cycle.not(), cycle_len);
         CharSeq {
-            head: not_h,
+            prefix: not_p,
             cycle: not_c,
-            head_len,
+            prefix_len,
             cycle_len,
         }
     }
@@ -56,23 +56,23 @@ impl BitOr for CharSeq {
 
     fn bitor(self, rhs: Self) -> Self::Output {
         let CharSeq {
-            head: h1,
+            prefix: p1,
             cycle: c1,
-            head_len,
+            prefix_len,
             cycle_len,
         } = self;
         let CharSeq {
-            head: h2,
+            prefix: p2,
             cycle: c2,
-            head_len: hl2,
+            prefix_len: pl2,
             cycle_len: cl2,
         } = rhs;
-        assert_eq!(head_len, hl2);
+        assert_eq!(prefix_len, pl2);
         assert_eq!(cycle_len, cl2);
         CharSeq {
-            head: h1 | h2,
+            prefix: p1 | p2,
             cycle: c1 | c2,
-            head_len,
+            prefix_len,
             cycle_len,
         }
     }
@@ -83,23 +83,23 @@ impl BitAnd for CharSeq {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         let CharSeq {
-            head: h1,
+            prefix: p1,
             cycle: c1,
-            head_len,
+            prefix_len,
             cycle_len,
         } = self;
         let CharSeq {
-            head: h2,
+            prefix: p2,
             cycle: c2,
-            head_len: hl2,
+            prefix_len: pl2,
             cycle_len: cl2,
         } = rhs;
-        assert_eq!(head_len, hl2);
+        assert_eq!(prefix_len, pl2);
         assert_eq!(cycle_len, cl2);
         CharSeq {
-            head: h1 & h2,
+            prefix: p1 & p2,
             cycle: c1 & c2,
-            head_len,
+            prefix_len,
             cycle_len,
         }
     }
@@ -110,8 +110,8 @@ impl CharSeq {
     /// i.e. it is true starting from the first position.
     #[inline]
     pub(crate) fn accepts(&self) -> bool {
-        if self.head_len > 0 {
-            (self.head & 1) == 1
+        if self.prefix_len > 0 {
+            (self.prefix & 1) == 1
         } else {
             assert!(self.cycle_len > 0);
             (self.cycle & 1) == 1
@@ -122,9 +122,9 @@ impl CharSeq {
     #[inline]
     pub(crate) fn next(mut self) -> Self {
         let out_bit = self.cycle & 1;
-        if self.head_len > 0 {
-            self.head >>= 1;
-            self.head |= out_bit << (self.head_len - 1);
+        if self.prefix_len > 0 {
+            self.prefix >>= 1;
+            self.prefix |= out_bit << (self.prefix_len - 1);
         }
 
         if self.cycle_len > 0 {
@@ -145,20 +145,20 @@ impl CharSeq {
     #[inline]
     pub(crate) fn finally(self) -> Self {
         let CharSeq {
-            head,
+            prefix,
             cycle,
-            head_len,
+            prefix_len,
             cycle_len,
         } = self;
         if cycle > 0 {
             CharSeq {
-                head: all_true_u64(head_len),
+                prefix: all_true_u64(prefix_len),
                 cycle: all_true_u64(cycle_len),
-                head_len,
+                prefix_len,
                 cycle_len,
             }
         } else {
-            let mut x = head;
+            let mut x = prefix;
             x |= x >> 1;
             x |= x >> 2;
             x |= x >> 4;
@@ -166,9 +166,9 @@ impl CharSeq {
             x |= x >> 16;
             x |= x >> 32;
             CharSeq {
-                head: x,
+                prefix: x,
                 cycle: 0,
-                head_len,
+                prefix_len,
                 cycle_len,
             }
         }
@@ -178,21 +178,21 @@ impl CharSeq {
     #[inline]
     pub(crate) fn until(self, rhs: Self) -> Self {
         let CharSeq {
-            head: h1,
+            prefix: p1,
             cycle: c1,
-            head_len: hl1,
+            prefix_len: pl1,
             cycle_len: cl1,
         } = self;
         let CharSeq {
-            head: h2,
+            prefix: p2,
             cycle: c2,
-            head_len: hl2,
+            prefix_len: pl2,
             cycle_len: cl2,
         } = rhs;
-        assert_eq!(hl1, hl2);
+        assert_eq!(pl1, pl2);
         assert_eq!(cl1, cl2);
         // Technique: double the cycles, and compute the regular Until
-        // on them. Then, transmit a single bit to the head, and compute
+        // on them. Then, transmit a single bit to the prefix, and compute
         // until from there.
         let mut long_c1 = c1 as u128 | (c1 as u128) << cl1;
         let mut long_c2 = c2 as u128 | (c2 as u128) << cl2;
@@ -212,8 +212,8 @@ impl CharSeq {
         let cycle_res = restrict_to_first_k_bits(long_c2 as u64, cl1);
         let exit_bit = cycle_res & 1;
 
-        let mut x = h1 as u128;
-        let mut y = h2 as u128 | (exit_bit as u128) << hl2;
+        let mut x = p1 as u128;
+        let mut y = p2 as u128 | (exit_bit as u128) << pl2;
         y |= x & (y >> 1);
         x &= x >> 1;
         y |= x & (y >> 2);
@@ -227,12 +227,12 @@ impl CharSeq {
         y |= x & (y >> 32);
         x &= x >> 32;
         y |= x & (y >> 64);
-        let head_res = restrict_to_first_k_bits(y as u64, hl1);
+        let prefix_res = restrict_to_first_k_bits(y as u64, pl1);
 
         CharSeq {
-            head: head_res,
+            prefix: prefix_res,
             cycle: cycle_res,
-            head_len: hl1,
+            prefix_len: pl1,
             cycle_len: cl1,
         }
     }
@@ -240,9 +240,9 @@ impl CharSeq {
 
 impl Display for CharSeq {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "(head: ")?;
-        for i in 0..self.head_len {
-            write!(f, "{}", (self.head >> i) & 1)?;
+        write!(f, "(prefix: ")?;
+        for i in 0..self.prefix_len {
+            write!(f, "{}", (self.prefix >> i) & 1)?;
         }
         write!(f, ", cycle: ")?;
         for i in 0..self.cycle_len {
@@ -274,12 +274,12 @@ where
     It2: Iterator<Item = bool>,
 {
     fn from((it1, it2): (It1, It2)) -> Self {
-        let (head, head_len) = u64_and_len_from_iter(it1);
+        let (prefix, prefix_len) = u64_and_len_from_iter(it1);
         let (cycle, cycle_len) = u64_and_len_from_iter(it2);
         CharSeq {
-            head,
+            prefix,
             cycle,
-            head_len,
+            prefix_len,
             cycle_len,
         }
     }
@@ -311,39 +311,39 @@ mod tests {
         phi.until(psi)
     }
 
-    fn random_seq_with_len(head_len: usize, cycle_len: usize, rng: &mut impl Rng) -> CharSeq {
-        let h: u64 = restrict_to_first_k_bits(rng.gen(), head_len);
+    fn random_seq_with_len(prefix_len: usize, cycle_len: usize, rng: &mut impl Rng) -> CharSeq {
+        let h: u64 = restrict_to_first_k_bits(rng.gen(), prefix_len);
         let c: u64 = restrict_to_first_k_bits(rng.gen(), cycle_len);
         CharSeq {
-            head: h,
+            prefix: h,
             cycle: c,
-            head_len,
+            prefix_len,
             cycle_len,
         }
     }
 
     fn random_pair() -> (CharSeq, CharSeq) {
         let mut rng = thread_rng();
-        let head_len = rng.gen_range(0..64);
+        let prefix_len = rng.gen_range(0..64);
         let cycle_len = rng.gen_range(0..64);
         (
-            random_seq_with_len(head_len, cycle_len, &mut rng),
-            random_seq_with_len(head_len, cycle_len, &mut rng),
+            random_seq_with_len(prefix_len, cycle_len, &mut rng),
+            random_seq_with_len(prefix_len, cycle_len, &mut rng),
         )
     }
 
     fn random_seq() -> CharSeq {
         let mut rng = thread_rng();
-        let head_len = rng.gen_range(0..64);
+        let prefix_len = rng.gen_range(0..64);
         let cycle_len = rng.gen_range(0..64);
-        random_seq_with_len(head_len, cycle_len, &mut rng)
+        random_seq_with_len(prefix_len, cycle_len, &mut rng)
     }
 
     #[test]
     fn phi_and_not_phi_is_zero() {
         for _ in 0..100 {
             let x = random_seq();
-            assert_eq!((x & !x).head, 0);
+            assert_eq!((x & !x).prefix, 0);
             assert_eq!((x & !x).cycle, 0);
         }
     }
