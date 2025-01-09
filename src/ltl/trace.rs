@@ -1,5 +1,7 @@
 use std::{fs::File, io::Read, path::Path};
 
+use log::debug;
+
 use crate::ops::{binary::LtlBinaryOp, unary::LtlUnaryOp};
 
 use super::cs::CharSeq;
@@ -28,18 +30,36 @@ pub struct Trace {
     pub alphabet: Vec<CharSeq>,
 }
 
-fn parse_trace(trace: &str) -> Option<Trace> {
-    let seq_pred: Vec<_> = trace
+fn parse_trace(trace: &str) -> Trace {
+    debug!("{trace}");
+    let mut pieces = trace.split('|');
+    let predicates_prefixes = pieces
+        .next()
+        .expect("Missing predicates prefixes.")
         .split(';')
+        .filter(|s| !s.is_empty())
         .map(|s| s.split(',').map(|v| v == "1").collect::<Vec<_>>())
-        .collect();
+        .collect::<Vec<_>>();
+    let predicates_cycle = pieces
+        .next()
+        .expect("Missing predicates cycles.")
+        .split(';')
+        .filter(|s| !s.is_empty())
+        .map(|s| s.split(',').map(|v| v == "1").collect::<Vec<_>>())
+        .collect::<Vec<_>>();
 
-    let n_pred = seq_pred.first()?.len();
+    let n_pred = predicates_cycle.first().expect("No predicates").len();
     let alphabet = (0..n_pred)
-        .map(|i| CharSeq::from_iter(seq_pred.iter().map(|v| v[i])))
+        .map(|i| {
+            (
+                predicates_prefixes.iter().map(|v| v[i]),
+                predicates_cycle.iter().map(|v| v[i]),
+            )
+                .into()
+        })
         .collect();
 
-    Some(Trace { alphabet })
+    Trace { alphabet }
 }
 
 pub fn traces_from_file(
@@ -61,7 +81,7 @@ pub(crate) fn parse_traces(buf: &str) -> (Vec<Trace>, Vec<String>, Vec<bool>, Op
         .map(|trs| {
             trs.trim_matches('\n')
                 .lines()
-                .filter_map(parse_trace)
+                .map(|t| parse_trace(t))
                 .collect::<Vec<_>>()
         })
         .collect();
@@ -69,8 +89,11 @@ pub(crate) fn parse_traces(buf: &str) -> (Vec<Trace>, Vec<String>, Vec<bool>, Op
     let op_desc = buf
         .split("---")
         .nth(2)
-        .expect("No operators list.")
-        .trim_matches('\n');
+        .expect("No operators section.")
+        .trim_matches('\n')
+        .split('\n')
+        .next()
+        .expect("No operators list.");
 
     let operators = if op_desc == "All Operators" {
         Operators {
@@ -86,6 +109,7 @@ pub(crate) fn parse_traces(buf: &str) -> (Vec<Trace>, Vec<String>, Vec<bool>, Op
             .split(',')
             .filter_map(|s| LtlBinaryOp::try_from(s).ok())
             .collect::<Vec<_>>();
+        debug!("Operators: {unary:?} {binary:?} {op_desc:?}");
         Operators { unary, binary }
     };
 
@@ -121,29 +145,26 @@ mod test {
 
     #[test]
     fn parsing() {
-        let buf = "0,0;0,1;0,0;0,1;0,0
-0,1;0,0;0,1;0,1;0,0
-0,1;0,0;0,1;0,0;0,1
-0,1;0,1;0,0;0,0;0,1
-0,1;0,0;0,0;0,1;0,1
-0,0;0,1;0,0;0,0;0,1
-0,0;0,1;0,1;0,0;0,0
-0,1;0,0;0,0;0,1;0,1
-0,1;0,1;0,1;0,1;0,1
-0,1;0,0;0,1;0,0;0,1
+        let buf = "|1,1;0,0;1,1;0,1
+1,0;|1,0;1,1;0,1;1,1
+0,0;1,0;|1,1;1,0;0,0
+1,1;|1,0;0,1;1,1;0,1
+0,0;1,1;|0,1
+0,1;0,0;0,1;|0,1;1,1;1,0
+0,1;1,0;0,1;|0,1;1,0;0,0
+1,0;0,1;|1,1;0,1;1,0;1,1
 ---
-1,0;0,1;0,0;0,1;0,1
-1,0;0,1;1,1;1,0;1,0
-0,0;1,1;0,0;0,1;1,1
-0,1;0,1;1,1;0,1;1,0
-1,0;1,0;1,0;1,0;1,0
-0,1;1,1;1,1;0,1;0,1
-1,0;1,1;0,1;0,1;0,0
-1,0;1,0;1,1;1,0;0,1
-1,1;0,1;0,0;0,1;1,0
-0,0;0,0;1,1;1,0;0,1
+1,1;|0,0;1,0;1,0;0,0
+0,1;0,1;|0,1;1,0;0,0
+|1,0;0,0;1,1;1,0
+0,0;1,1;|1,0;0,0;0,1
+1,0;0,0;1,0;|0,0;1,0;1,0
+0,0;|0,1;0,0;1,0;0,0
+0,0;1,1;|0,0;0,1;1,0;0,0
+0,1;|0,0;1,0;1,0;0,0;1,0
 ---
-F,G,X,!,&,|
+All Operators
+F(p & X(q))
 ---
 p,q";
         let _res = parse_traces(buf);
