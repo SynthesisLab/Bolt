@@ -2,15 +2,15 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 
-use log::info;
-use ltl_rs::{
+use bolt::{
     algos::{
-        beam_search::BeamSearchParams, enumeration::EnumParams, meta::divide_conquer,
-        set_cover::SetCoverParams, BoolAlgoParams,
+        BoolAlgoParams, beam_search::BeamSearchParams, enumeration::EnumParams,
+        meta::divide_conquer, set_cover::SetCoverParams,
     },
     formula::tree::FormulaTree,
     ltl::trace::traces_from_file,
 };
+use log::info;
 
 fn main() {
     env_logger::init();

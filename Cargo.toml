@@ -1,19 +1,21 @@
 [package]
-name = "ltl-rs"
-version = "0.1.0"
-edition = "2021"
-default-run= "ltl-rs"
+name = "bolt"
+version = "0.2.0"
+authors = ["BATHIE, Gabriel <gbathie.dev@gmail.com>"]
+description = "Blazingly fast LTL Learning in Rust!"
+edition = "2024"
+default-run = "bolt"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "4.5.1", features = ["derive"] }
-env_logger = "0.11.2"
+clap = { version = "4.5.37", features = ["derive"] }
+env_logger = "0.11.8"
 fxhash = "0.2.1"
-itertools = "0.13.0"
-log = "0.4.20"
-ordered-float = "4.2.1"
-thiserror = "1.0.64"
+itertools = "0.14.0"
+log = "0.4.27"
+ordered-float = "5.0.0"
+thiserror = "2.0.12"
 
 [dev-dependencies]
-rand = "0.8.5"
+rand = "0.9.1"

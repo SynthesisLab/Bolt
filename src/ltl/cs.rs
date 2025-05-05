@@ -167,7 +167,7 @@ impl FromIterator<bool> for CharSeq {
 
 #[cfg(test)]
 mod tests {
-    use rand::{thread_rng, Rng};
+    use rand::{rng, Rng};
 
     use super::*;
 
@@ -192,7 +192,7 @@ mod tests {
     }
 
     fn random_seq_with_len(len: usize, rng: &mut impl Rng) -> CharSeq {
-        let x: u64 = rng.gen();
+        let x: u64 = rng.random();
         let x = if len < 64 { x & ((1u64 << len) - 1) } else { x };
         CharSeq {
             values: x,
@@ -201,8 +201,8 @@ mod tests {
     }
 
     fn random_pair() -> (CharSeq, CharSeq) {
-        let mut rng = thread_rng();
-        let len = rng.gen_range(0..64);
+        let mut rng = rng();
+        let len = rng.random_range(0..64);
         (
             random_seq_with_len(len, &mut rng),
             random_seq_with_len(len, &mut rng),
@@ -210,8 +210,8 @@ mod tests {
     }
 
     fn random_seq() -> CharSeq {
-        let mut rng = thread_rng();
-        let len = rng.gen_range(0..64);
+        let mut rng = rng();
+        let len = rng.random_range(0..64);
         random_seq_with_len(len, &mut rng)
     }
 

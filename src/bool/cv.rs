@@ -135,12 +135,12 @@ impl FromIterator<bool> for CharVec {
 
 #[cfg(test)]
 mod tests {
-    use rand::{thread_rng, Rng};
+    use rand::{rng, Rng};
 
     use super::*;
 
     fn random_vec_with_len(len: usize, rng: &mut impl Rng) -> CharVec {
-        let x: u128 = rng.gen();
+        let x: u128 = rng.random();
         let x = if len < 128 {
             x & ((1u128 << len) - 1)
         } else {
@@ -153,8 +153,8 @@ mod tests {
     }
 
     fn random_pair() -> (CharVec, CharVec) {
-        let mut rng = thread_rng();
-        let len = rng.gen_range(0..128);
+        let mut rng = rng();
+        let len = rng.random_range(0..128);
         (
             random_vec_with_len(len, &mut rng),
             random_vec_with_len(len, &mut rng),
@@ -162,8 +162,8 @@ mod tests {
     }
 
     fn random_vec() -> CharVec {
-        let mut rng = thread_rng();
-        let len = rng.gen_range(0..128);
+        let mut rng = rng();
+        let len = rng.random_range(0..128);
         random_vec_with_len(len, &mut rng)
     }
 

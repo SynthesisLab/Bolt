@@ -54,7 +54,7 @@ pub fn traces_from_file(
     parse_traces(&buf)
 }
 
-pub(crate) fn parse_traces(buf: &str) -> (Vec<Trace>, Vec<String>, Vec<bool>, Operators) {
+pub fn parse_traces(buf: &str) -> (Vec<Trace>, Vec<String>, Vec<bool>, Operators) {
     let mut traces: Vec<_> = buf
         .split("---")
         .take(2)
