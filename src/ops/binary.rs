@@ -27,10 +27,7 @@ impl LtlBinaryOp {
 
     /// Whether this LTL operator is boolean.
     pub(crate) fn is_boolean(&self) -> bool {
-        match self {
-            LtlBinaryOp::Or | LtlBinaryOp::And => true,
-            _ => false,
-        }
+        matches!(self, LtlBinaryOp::Or | LtlBinaryOp::And)
     }
 
     /// Apply the operator to two characteristic vectors.

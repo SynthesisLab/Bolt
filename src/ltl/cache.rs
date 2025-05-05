@@ -62,7 +62,7 @@ impl EnumFormulaCache<LtlCharac> for LtlCache {
         let iter_size = new_size - 1;
         let iter_formulas = old_lines[iter_size].iter();
 
-        let iter_pairs_size = (new_size + 1) / 2;
+        let iter_pairs_size = new_size.div_ceil(2);
         let iter_pairs = old_lines
             .iter()
             .zip(old_lines.iter().rev())
@@ -113,7 +113,7 @@ pub(crate) struct LtlCacheLine<'a> {
     hashes: &'a mut FxHashMap<LtlHash, (usize, usize)>,
 }
 
-impl<'a> EnumFormulaCacheLine<LtlCharac> for LtlCacheLine<'a> {
+impl EnumFormulaCacheLine<LtlCharac> for LtlCacheLine<'_> {
     fn push(&mut self, f: LtlFormula) -> bool {
         assert_eq!(f.size, self.size_index);
         match self.hashes.entry(f.hashed()) {

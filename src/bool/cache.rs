@@ -90,7 +90,7 @@ impl EnumFormulaCache<BoolCharac> for BoolCache {
         let iter_size = size - 1;
         let iter_formulas = old_lines[iter_size].iter();
 
-        let iter_pairs_size = (size + 1) / 2;
+        let iter_pairs_size = size.div_ceil(2);
         let iter_pairs = old_lines
             .iter()
             .zip(old_lines.iter().rev())
@@ -141,7 +141,7 @@ pub(crate) struct BoolCacheLine<'a> {
     size_index: usize,
 }
 
-impl<'a> BoolCacheLine<'a> {
+impl BoolCacheLine<'_> {
     fn dominates(&self, f: &BoolFormula) -> Option<<BoolCharac as Hashed>::HashType> {
         // Iterate in reverse order to start with the densest formulas,
         // which are more likely to dominate.
@@ -162,7 +162,7 @@ impl<'a> BoolCacheLine<'a> {
     }
 }
 
-impl<'a> EnumFormulaCacheLine<BoolCharac> for BoolCacheLine<'a> {
+impl EnumFormulaCacheLine<BoolCharac> for BoolCacheLine<'_> {
     fn push(&mut self, f: BoolFormula) -> bool {
         assert_eq!(f.size, self.size_index);
         if self.dominates(&f).is_some() {

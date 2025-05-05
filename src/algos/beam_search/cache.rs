@@ -76,7 +76,7 @@ impl EnumFormulaCache<BoolCharac> for BeamSearchCache {
         let iter_size = size - 1;
         let iter_formulas = old_lines[iter_size].iter().map(|pf| &pf.f);
 
-        let iter_pairs_size = (size + 1) / 2;
+        let iter_pairs_size = size.div_ceil(2);
         let iter_pairs = old_lines
             .iter()
             .zip(old_lines.iter().rev())
@@ -120,7 +120,7 @@ pub(crate) struct BeamSearchBoolCacheLine<'a> {
     max_line_size: usize,
 }
 
-impl<'a> BeamSearchBoolCacheLine<'a> {
+impl BeamSearchBoolCacheLine<'_> {
     fn dominates(&self, f: &BoolFormula) -> Option<<BoolCharac as Hashed>::HashType> {
         self.line.iter().find_map(|sv| {
             if sv.dominates(f) {
@@ -132,7 +132,7 @@ impl<'a> BeamSearchBoolCacheLine<'a> {
     }
 }
 
-impl<'a> EnumFormulaCacheLine<BoolCharac> for BeamSearchBoolCacheLine<'a> {
+impl EnumFormulaCacheLine<BoolCharac> for BeamSearchBoolCacheLine<'_> {
     fn push(&mut self, f: BoolFormula) -> bool {
         if self.dominates(&f).is_some() {
             return false;
