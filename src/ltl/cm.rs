@@ -78,4 +78,6 @@ impl CharMatrix {
     binop_for_cm!(bitor as or);
     binop_for_cm!(bitand as and);
     binop_for_cm!(until);
+    binop_for_cm!(implies);
+    binop_for_cm!(equiv);
 }

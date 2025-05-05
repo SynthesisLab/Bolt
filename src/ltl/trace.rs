@@ -1,8 +1,24 @@
-use std::{fs::File, io::Read, path::Path};
+use std::{collections::HashMap, fs::File, io::Read, path::Path};
+
+use serde::Deserialize;
 
 use crate::ops::{binary::LtlBinaryOp, unary::LtlUnaryOp};
 
 use super::cs::CharSeq;
+
+#[derive(Debug, Clone)]
+pub struct Instance {
+    pub traces: Vec<Trace>,
+    pub atomic_propositions: Vec<String>,
+    pub target: Vec<bool>,
+    pub operators: Operators,
+}
+
+/// Stores the [`CharSeq`] of each predicate on a given trace.
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+pub struct Trace {
+    pub alphabet: Vec<CharSeq>,
+}
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Operators {
@@ -17,34 +33,19 @@ impl Operators {
         self
     }
 
+    fn all() -> Self {
+        Self {
+            unary: LtlUnaryOp::all(),
+            binary: LtlBinaryOp::all(),
+        }
+    }
+
     pub fn len(&self) -> usize {
         self.unary.len() + self.binary.len()
     }
 }
 
-/// Stores the [`CharSeq`] of each predicate on a given trace.
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
-pub struct Trace {
-    pub alphabet: Vec<CharSeq>,
-}
-
-fn parse_trace(trace: &str) -> Option<Trace> {
-    let seq_pred: Vec<_> = trace
-        .split(';')
-        .map(|s| s.split(',').map(|v| v == "1").collect::<Vec<_>>())
-        .collect();
-
-    let n_pred = seq_pred.first()?.len();
-    let alphabet = (0..n_pred)
-        .map(|i| CharSeq::from_iter(seq_pred.iter().map(|v| v[i])))
-        .collect();
-
-    Some(Trace { alphabet })
-}
-
-pub fn traces_from_file(
-    fname: impl AsRef<Path>,
-) -> (Vec<Trace>, Vec<String>, Vec<bool>, Operators) {
+pub fn traces_from_file(fname: impl AsRef<Path>) -> Instance {
     let mut file = File::open(fname).expect("Failed to open trace file");
 
     let mut buf = String::new();
@@ -54,65 +55,80 @@ pub fn traces_from_file(
     parse_traces(&buf)
 }
 
-pub fn parse_traces(buf: &str) -> (Vec<Trace>, Vec<String>, Vec<bool>, Operators) {
-    let mut traces: Vec<_> = buf
-        .split("---")
-        .take(2)
-        .map(|trs| {
-            trs.trim_matches('\n')
-                .lines()
-                .filter_map(parse_trace)
-                .collect::<Vec<_>>()
-        })
+pub fn parse_traces(buf: &str) -> Instance {
+    let parsed_input: ParsedInput = serde_json::from_str(buf).expect("Failed to parse input json");
+    assert!(
+        parsed_input.max_length_traces <= 64,
+        "Input traces are too long: {} (max 64)",
+        parsed_input.max_length_traces
+    );
+
+    let traces: Option<Vec<_>> = parsed_input
+        .positive_traces
+        .into_iter()
+        .map(|pt| pt.traces_vec_from_alphabet(&parsed_input.atomic_propositions))
+        .chain(
+            parsed_input
+                .negative_traces
+                .into_iter()
+                .map(|pt| pt.traces_vec_from_alphabet(&parsed_input.atomic_propositions)),
+        )
         .collect();
+    let traces = traces.expect("Incorrect traces format");
 
-    let op_desc = buf
-        .split("---")
-        .nth(2)
-        .expect("No operators list.")
-        .trim_matches('\n');
-
-    let operators = if op_desc == "All Operators" {
-        Operators {
-            unary: LtlUnaryOp::all(),
-            binary: LtlBinaryOp::all(),
-        }
-    } else {
-        let unary = op_desc
-            .split(',')
-            .filter_map(|s| LtlUnaryOp::try_from(s).ok())
-            .collect::<Vec<_>>();
-        let binary = op_desc
-            .split(',')
-            .filter_map(|s| LtlBinaryOp::try_from(s).ok())
-            .collect::<Vec<_>>();
-        Operators { unary, binary }
-    };
-
-    let alphabet = buf
-        .split("---")
-        .skip(3)
-        .take(1)
-        .map(|trs| {
-            trs.trim_matches('\n')
-                .split(',')
-                .map(str::to_owned)
-                .collect::<Vec<_>>()
-        })
-        .next()
-        .expect("No alphabet definition.");
-
-    let target = traces[0]
-        .iter()
+    let target: Vec<_> = (0..parsed_input.number_positive_traces)
         .map(|_| true)
-        .chain(traces[1].iter().map(|_| false))
+        .chain((0..parsed_input.number_negative_traces).map(|_| false))
         .collect();
 
-    let neg = traces.pop().expect("Negative instances");
-    let mut traces = traces.pop().expect("Positive instances");
+    // Operators filtering is not implemented in current input format.
+    let operators = Operators::all();
 
-    traces.extend(neg);
-    (traces, alphabet, target, operators)
+    Instance {
+        traces,
+        atomic_propositions: parsed_input.atomic_propositions,
+        target,
+        operators,
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ParsedTrace {
+    #[serde(flatten)]
+    alphabet: HashMap<String, Vec<String>>,
+}
+
+/// Converts a vector of "0"/"1" strings to a CharSeq
+fn vec_to_cs(v: &Vec<String>) -> CharSeq {
+    v.iter()
+        .map(|c| match c {
+            s if s == "0" => false,
+            s if s == "1" => true,
+            _ => panic!("Unexpected literal in traces definition"),
+        })
+        .collect()
+}
+
+impl ParsedTrace {
+    pub fn traces_vec_from_alphabet(&self, alphabet: &Vec<String>) -> Option<Trace> {
+        let char_seqs: Option<Vec<CharSeq>> = alphabet
+            .iter()
+            .map(|s| self.alphabet.get(s).map(vec_to_cs))
+            .collect();
+        Some(Trace {
+            alphabet: char_seqs?,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ParsedInput {
+    positive_traces: Vec<ParsedTrace>,
+    negative_traces: Vec<ParsedTrace>,
+    atomic_propositions: Vec<String>,
+    number_positive_traces: usize,
+    number_negative_traces: usize,
+    max_length_traces: usize,
 }
 
 #[cfg(test)]
@@ -120,32 +136,54 @@ mod test {
     use super::*;
 
     #[test]
+    fn convert_vec_to_cs() {
+        let v = vec!["1".into(), "0".into(), "1".into()];
+        let cs = vec_to_cs(&v);
+        assert_eq!(cs.len(), 3);
+        assert_eq!(cs.values, 0b101);
+    }
+
+    #[test]
     fn parsing() {
-        let buf = "0,0;0,1;0,0;0,1;0,0
-0,1;0,0;0,1;0,1;0,0
-0,1;0,0;0,1;0,0;0,1
-0,1;0,1;0,0;0,0;0,1
-0,1;0,0;0,0;0,1;0,1
-0,0;0,1;0,0;0,0;0,1
-0,0;0,1;0,1;0,0;0,0
-0,1;0,0;0,0;0,1;0,1
-0,1;0,1;0,1;0,1;0,1
-0,1;0,0;0,1;0,0;0,1
----
-1,0;0,1;0,0;0,1;0,1
-1,0;0,1;1,1;1,0;1,0
-0,0;1,1;0,0;0,1;1,1
-0,1;0,1;1,1;0,1;1,0
-1,0;1,0;1,0;1,0;1,0
-0,1;1,1;1,1;0,1;0,1
-1,0;1,1;0,1;0,1;0,0
-1,0;1,0;1,1;1,0;0,1
-1,1;0,1;0,0;0,1;1,0
-0,0;0,0;1,1;1,0;0,1
----
-F,G,X,!,&,|
----
-p,q";
+        let buf = r#"
+{
+    "positive_traces": [
+        {
+            "a0": ["0", "1", "1", "0"],
+            "a1": ["0", "1", "0", "1"]
+        }
+    ],
+    "negative_traces": [
+        {
+            "a0": ["1", "1", "1", "0"],
+            "a1": ["0", "1", "0", "1"]
+        },
+        {
+            "a0": ["0", "1", "1", "0"],
+            "a1": ["0", "1", "1", "1"]
+        },
+        {
+            "a0": ["0", "1", "1", "1"],
+            "a1": ["0", "1", "0", "1"]
+        },
+        {
+            "a0": ["0", "1", "1", "0"],
+            "a1": ["0", "1", "0", "0"]
+        }
+    ],
+    "smallest_known_formula": "",
+    "generating_formula": "",
+    "generating_seed": "",
+    "original_repository": "https://github.com/MojtabaValizadeh/ltl-learning-on-gpus",
+    "name": "",
+    "atomic_propositions": ["a0","a1"],
+    "number_atomic_propositions": 2,
+    "number_traces": 5,
+    "number_positive_traces": 1,
+    "number_negative_traces": 4,
+    "max_length_traces": 4,
+    "trace_type": "finite"
+}"#;
         let _res = parse_traces(buf);
     }
 }

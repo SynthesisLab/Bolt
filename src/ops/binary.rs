@@ -16,13 +16,15 @@ pub enum LtlBinaryOp {
     Or,
     And,
     Until,
+    Implies,
+    Equivalent,
 }
 
 impl LtlBinaryOp {
     /// Returns a list of all binary operators.
     pub(crate) fn all() -> Vec<LtlBinaryOp> {
         use LtlBinaryOp::*;
-        vec![Or, And, Until]
+        vec![Or, And, Until, Implies, Equivalent]
     }
 
     /// Whether this LTL operator is boolean.
@@ -39,7 +41,10 @@ impl LtlBinaryOp {
         match op {
             LtlBinaryOp::Or => lhs.bitor(rhs),
             LtlBinaryOp::And => lhs.bitand(rhs),
-            _ => panic!("Cannot apply non-boolean operator to characteristic vectors"),
+            _ => panic!(
+                "Cannot apply non-boolean operator {} to characteristic vectors",
+                op
+            ),
         }
     }
 
@@ -49,6 +54,8 @@ impl LtlBinaryOp {
             LtlBinaryOp::Or => lhs.or(rhs),
             LtlBinaryOp::And => lhs.and(rhs),
             LtlBinaryOp::Until => lhs.until(rhs),
+            LtlBinaryOp::Implies => lhs.implies(rhs),
+            LtlBinaryOp::Equivalent => lhs.equiv(rhs),
         }
     }
 }
@@ -56,8 +63,8 @@ impl LtlBinaryOp {
 impl Commutativity for LtlBinaryOp {
     fn commutes(&self) -> bool {
         match self {
-            LtlBinaryOp::Or | LtlBinaryOp::And => true,
-            LtlBinaryOp::Until => false,
+            LtlBinaryOp::Or | LtlBinaryOp::And | LtlBinaryOp::Equivalent => true,
+            LtlBinaryOp::Until | LtlBinaryOp::Implies => false,
         }
     }
 }
@@ -78,12 +85,16 @@ impl<'a> TryFrom<&'a str> for LtlBinaryOp {
     /// | `"\|"` | [`LtlBinaryOp::Or`]   |
     /// | `"&"`  | [`LtlBinaryOp::And`]  |
     /// | `"U"`  | [`LtlBinaryOp::Until`]|
+    /// | `"->"`  | [`LtlBinaryOp::Implies`]|
+    /// | `"<->"`  | [`LtlBinaryOp::Equivalent`]|
     /// | Other value  | `Error`  |
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
         match value {
             "|" => Ok(LtlBinaryOp::Or),
             "&" => Ok(LtlBinaryOp::And),
             "U" => Ok(LtlBinaryOp::Until),
+            "->" => Ok(LtlBinaryOp::Implies),
+            "<->" => Ok(LtlBinaryOp::Equivalent),
             _ => Err(InvalidBinaryOp(value)),
         }
     }
@@ -95,6 +106,8 @@ impl Display for LtlBinaryOp {
             LtlBinaryOp::And => write!(f, "&"),
             LtlBinaryOp::Or => write!(f, "|"),
             LtlBinaryOp::Until => write!(f, "U"),
+            LtlBinaryOp::Implies => write!(f, "->"),
+            LtlBinaryOp::Equivalent => write!(f, "<->"),
         }
     }
 }

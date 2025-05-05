@@ -37,21 +37,21 @@ fn get_name_time_sol<P: BoolAlgoParams + Clone>(
     domin_nb: usize,
     params: P,
 ) -> Option<FormulaTree> {
-    let (traces, alphabet, target, operators) = traces_from_file(fname);
+    let instance = traces_from_file(fname);
 
     let res = divide_conquer(
-        &traces,
-        alphabet,
-        operators,
-        target.clone(),
+        &instance.traces,
+        instance.atomic_propositions,
+        instance.operators,
+        instance.target.clone(),
         max_size_ltl,
         domin_nb,
         params,
     );
 
     if let Some(t) = res.sol() {
-        let actual_value = t.eval(&traces).accepted_vec();
-        assert_eq!(actual_value, target);
+        let actual_value = t.eval(&instance.traces).accepted_vec();
+        assert_eq!(actual_value, instance.target);
         info!("Correctness check OK!");
     }
 

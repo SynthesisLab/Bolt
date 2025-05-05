@@ -2,13 +2,13 @@
 //! and related operators.
 use std::{
     fmt::{Debug, Display},
-    ops::{BitAnd, BitOr, Not},
+    ops::{BitAnd, BitOr, BitXor, Not},
 };
 
 /// Characteristic sequence of an LTL formula on a trace.
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct CharSeq {
-    values: u64,
+    pub(crate) values: u64,
     length: usize,
 }
 
@@ -72,6 +72,41 @@ impl CharSeq {
     #[inline]
     pub(crate) fn accepts(&self) -> bool {
         (self.values & 1) == 1
+    }
+
+    /// Boolean implication operator (->)
+    #[inline]
+    pub(crate) fn implies(self, rhs: Self) -> Self {
+        let CharSeq { values: x, length } = self;
+        let CharSeq {
+            values: y,
+            length: _l2,
+        } = rhs;
+        // x -> y <=> !x or y
+        let values = x.not().bitor(y);
+        let values = if self.length < 64 {
+            values & ((1u64 << self.length) - 1)
+        } else {
+            values
+        };
+        CharSeq { values, length }
+    }
+
+    /// Boolean equivalence operator (<->)
+    #[inline]
+    pub(crate) fn equiv(self, rhs: Self) -> Self {
+        let CharSeq { values: x, length } = self;
+        let CharSeq {
+            values: y,
+            length: _l2,
+        } = rhs;
+        let values = (x.bitxor(y)).not();
+        let values = if self.length < 64 {
+            values & ((1u64 << self.length) - 1)
+        } else {
+            values
+        };
+        CharSeq { values, length }
     }
 
     /// LTL Next operator (X)
@@ -167,7 +202,7 @@ impl FromIterator<bool> for CharSeq {
 
 #[cfg(test)]
 mod tests {
-    use rand::{rng, Rng};
+    use rand::{Rng, rng};
 
     use super::*;
 
@@ -318,6 +353,46 @@ mod tests {
         for _ in 0..100 {
             let (x, y) = random_pair();
             assert_eq!(U(x, y), y | (x & X(U(x, y))));
+        }
+    }
+
+    #[test]
+    fn x_implies_x() {
+        for _ in 0..100 {
+            let x = random_seq();
+            assert_eq!(x.implies(x).values, (1 << x.length) - 1);
+        }
+    }
+
+    #[test]
+    fn implies_def() {
+        for _ in 0..100 {
+            let (x, y) = random_pair();
+            assert_eq!(x.implies(y), x.not() | y);
+        }
+    }
+
+    #[test]
+    fn x_equiv_x() {
+        for _ in 0..100 {
+            let x = random_seq();
+            assert_eq!(x.equiv(x).values, (1 << x.length) - 1);
+        }
+    }
+
+    #[test]
+    fn equiv_iff_double_implies() {
+        for _ in 0..100 {
+            let (x, y) = random_pair();
+            assert_eq!(x.equiv(y), x.implies(y) & y.implies(x));
+        }
+    }
+
+    #[test]
+    fn equiv_def() {
+        for _ in 0..100 {
+            let (x, y) = random_pair();
+            assert_eq!(x.equiv(y), (x & y) | (x.not() & y.not()));
         }
     }
 }

@@ -16,32 +16,32 @@ fn main() {
     env_logger::init();
 
     let args = CliArgs::parse();
-    let (traces, alphabet, target, operators) = traces_from_file(&args.input_filename);
+    let instance = traces_from_file(&args.input_filename);
 
     let (time, sol, name) = match args.command {
         AlgoCommand::Enum(p) => get_name_time_sol(
-            traces,
-            alphabet,
-            operators,
-            target,
+            instance.traces,
+            instance.atomic_propositions,
+            instance.operators,
+            instance.target,
             args.max_size_ltl,
             args.domin_nb,
             p,
         ),
         AlgoCommand::SetCover(p) => get_name_time_sol(
-            traces,
-            alphabet,
-            operators,
-            target,
+            instance.traces,
+            instance.atomic_propositions,
+            instance.operators,
+            instance.target,
             args.max_size_ltl,
             args.domin_nb,
             p,
         ),
         AlgoCommand::BeamSearch(p) => get_name_time_sol(
-            traces,
-            alphabet,
-            operators,
-            target,
+            instance.traces,
+            instance.atomic_propositions,
+            instance.operators,
+            instance.target,
             args.max_size_ltl,
             args.domin_nb,
             p,

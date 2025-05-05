@@ -89,7 +89,7 @@ where
 
 /// Solve Boolean Synthesis problem using Divide and Conquer and the algorithm specified in `params`.
 ///
-/// If the number of traces is more than 128 split immediately.
+/// If the number of traces is more than 128, split immediately.
 /// Otherwise, try to solve the instance with the algorithm implemented by `params`.
 /// If no solution is found, try to find one by splitting recursively.
 /// Splitting is handled using [`split_and_solve_non_overlapping`].
