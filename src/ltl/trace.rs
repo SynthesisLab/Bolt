@@ -110,7 +110,7 @@ fn vec_to_cs(v: &Vec<String>) -> CharSeq {
 }
 
 impl ParsedTrace {
-    pub fn traces_vec_from_alphabet(&self, alphabet: &Vec<String>) -> Option<Trace> {
+    pub fn traces_vec_from_alphabet(&self, alphabet: &[String]) -> Option<Trace> {
         let char_seqs: Option<Vec<CharSeq>> = alphabet
             .iter()
             .map(|s| self.alphabet.get(s).map(vec_to_cs))

@@ -87,9 +87,10 @@ mod test {
     use super::*;
 
     #[test]
-    fn string_try_into_binary_op() {
+    fn string_try_into_unary_op() {
         let parsed = "X".try_into();
         assert_eq!(parsed, Ok(LtlUnaryOp::WeakNext));
+
         let parsed = "X[!]".try_into();
         assert_eq!(parsed, Ok(LtlUnaryOp::StrongNext));
 
