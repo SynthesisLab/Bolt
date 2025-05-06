@@ -29,10 +29,10 @@ impl LtlBinaryOp {
     }
 
     /// Whether this LTL operator is boolean.
-    pub(crate) fn is_boolean(&self) -> bool {
+    pub(crate) fn is_boolean_monotone(&self) -> bool {
         matches!(
             self,
-            LtlBinaryOp::Or | LtlBinaryOp::And | LtlBinaryOp::Implies | LtlBinaryOp::Equivalent
+            LtlBinaryOp::Or | LtlBinaryOp::And | LtlBinaryOp::Equivalent
         )
     }
 

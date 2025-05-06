@@ -28,8 +28,8 @@ pub struct Operators {
 
 impl Operators {
     pub(crate) fn filter_bool(mut self) -> Self {
-        self.unary.retain(|op| op.is_boolean());
-        self.binary.retain(|op| op.is_boolean());
+        self.unary.retain(|op| op.is_boolean_monotone());
+        self.binary.retain(|op| op.is_boolean_monotone());
         self
     }
 

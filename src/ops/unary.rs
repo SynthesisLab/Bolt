@@ -21,7 +21,7 @@ impl LtlUnaryOp {
         // vec![Not, WeakNext, StrongNext, Finally, Globally]
     }
 
-    pub(crate) fn is_boolean(&self) -> bool {
+    pub(crate) fn is_boolean_monotone(&self) -> bool {
         match self {
             // LtlUnaryOp::Not => true,
             LtlUnaryOp::WeakNext
