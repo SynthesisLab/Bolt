@@ -74,10 +74,11 @@ impl CharMatrix {
         self.seqs.iter().map(|x| x.accepts()).collect()
     }
 
-    op_for_cm!(next, globally, finally);
+    op_for_cm!(weak_next, strong_next, globally, finally);
     binop_for_cm!(bitor as or);
     binop_for_cm!(bitand as and);
     binop_for_cm!(until);
+    binop_for_cm!(release);
     binop_for_cm!(implies);
     binop_for_cm!(equiv);
 }

@@ -48,6 +48,39 @@ impl CharVec {
         let values = self.values.bitxor(sv.values);
         SatVec { values }
     }
+
+    #[inline]
+    pub fn implies(self, rhs: Self) -> Self {
+        let CharVec { values: x, length } = self;
+        let CharVec {
+            values: y,
+            length: _l2,
+        } = rhs;
+        let values = x.not().bitor(y);
+        let values = if self.length < 128 {
+            values & ((1u128 << self.length) - 1)
+        } else {
+            values
+        };
+        CharVec { values, length }
+    }
+
+    #[inline]
+    pub fn equiv(self, rhs: Self) -> Self {
+        let CharVec { values: x, length } = self;
+        let CharVec {
+            values: y,
+            length: _l2,
+        } = rhs;
+
+        let values = (x.bitxor(y)).not();
+        let values = if self.length < 128 {
+            values & ((1u128 << self.length) - 1)
+        } else {
+            values
+        };
+        CharVec { values, length }
+    }
 }
 
 impl Not for CharVec {
@@ -135,7 +168,7 @@ impl FromIterator<bool> for CharVec {
 
 #[cfg(test)]
 mod tests {
-    use rand::{rng, Rng};
+    use rand::{Rng, rng};
 
     use super::*;
 
@@ -205,6 +238,46 @@ mod tests {
         for _ in 0..100 {
             let (x1, x2) = random_pair();
             assert_eq!(!(x1 | x2), !x1 & !x2);
+        }
+    }
+
+    #[test]
+    fn x_implies_x() {
+        for _ in 0..100 {
+            let x = random_vec();
+            assert_eq!(x.implies(x).values, (1 << x.length) - 1);
+        }
+    }
+
+    #[test]
+    fn implies_def() {
+        for _ in 0..100 {
+            let (x, y) = random_pair();
+            assert_eq!(x.implies(y), x.not() | y);
+        }
+    }
+
+    #[test]
+    fn x_equiv_x() {
+        for _ in 0..100 {
+            let x = random_vec();
+            assert_eq!(x.equiv(x).values, (1 << x.length) - 1);
+        }
+    }
+
+    #[test]
+    fn equiv_iff_double_implies() {
+        for _ in 0..100 {
+            let (x, y) = random_pair();
+            assert_eq!(x.equiv(y), x.implies(y) & y.implies(x));
+        }
+    }
+
+    #[test]
+    fn equiv_def() {
+        for _ in 0..100 {
+            let (x, y) = random_pair();
+            assert_eq!(x.equiv(y), (x & y) | (x.not() & y.not()));
         }
     }
 }

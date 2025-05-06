@@ -11,11 +11,12 @@ use crate::{bool::cv::CharVec, ltl::cm::CharMatrix};
 use super::traits::Commutativity;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-/// Binary LTL Operators: Or, And, Until
+/// Binary LTL Operators: Or, And, Until, Release, Implication and Equivalence
 pub enum LtlBinaryOp {
     Or,
     And,
     Until,
+    Release,
     Implies,
     Equivalent,
 }
@@ -24,12 +25,15 @@ impl LtlBinaryOp {
     /// Returns a list of all binary operators.
     pub(crate) fn all() -> Vec<LtlBinaryOp> {
         use LtlBinaryOp::*;
-        vec![Or, And, Until, Implies, Equivalent]
+        vec![Or, And, Until, Release, Implies, Equivalent]
     }
 
     /// Whether this LTL operator is boolean.
     pub(crate) fn is_boolean(&self) -> bool {
-        matches!(self, LtlBinaryOp::Or | LtlBinaryOp::And)
+        matches!(
+            self,
+            LtlBinaryOp::Or | LtlBinaryOp::And | LtlBinaryOp::Implies | LtlBinaryOp::Equivalent
+        )
     }
 
     /// Apply the operator to two characteristic vectors.
@@ -41,6 +45,8 @@ impl LtlBinaryOp {
         match op {
             LtlBinaryOp::Or => lhs.bitor(rhs),
             LtlBinaryOp::And => lhs.bitand(rhs),
+            LtlBinaryOp::Implies => lhs.implies(rhs),
+            LtlBinaryOp::Equivalent => lhs.equiv(rhs),
             _ => panic!(
                 "Cannot apply non-boolean operator {} to characteristic vectors",
                 op
@@ -54,6 +60,7 @@ impl LtlBinaryOp {
             LtlBinaryOp::Or => lhs.or(rhs),
             LtlBinaryOp::And => lhs.and(rhs),
             LtlBinaryOp::Until => lhs.until(rhs),
+            LtlBinaryOp::Release => lhs.release(rhs),
             LtlBinaryOp::Implies => lhs.implies(rhs),
             LtlBinaryOp::Equivalent => lhs.equiv(rhs),
         }
@@ -64,7 +71,7 @@ impl Commutativity for LtlBinaryOp {
     fn commutes(&self) -> bool {
         match self {
             LtlBinaryOp::Or | LtlBinaryOp::And | LtlBinaryOp::Equivalent => true,
-            LtlBinaryOp::Until | LtlBinaryOp::Implies => false,
+            LtlBinaryOp::Until | LtlBinaryOp::Release | LtlBinaryOp::Implies => false,
         }
     }
 }
@@ -85,6 +92,7 @@ impl<'a> TryFrom<&'a str> for LtlBinaryOp {
     /// | `"\|"` | [`LtlBinaryOp::Or`]   |
     /// | `"&"`  | [`LtlBinaryOp::And`]  |
     /// | `"U"`  | [`LtlBinaryOp::Until`]|
+    /// | `"R"`  | [`LtlBinaryOp::Release`]|
     /// | `"->"`  | [`LtlBinaryOp::Implies`]|
     /// | `"<->"`  | [`LtlBinaryOp::Equivalent`]|
     /// | Other value  | `Error`  |
@@ -93,6 +101,7 @@ impl<'a> TryFrom<&'a str> for LtlBinaryOp {
             "|" => Ok(LtlBinaryOp::Or),
             "&" => Ok(LtlBinaryOp::And),
             "U" => Ok(LtlBinaryOp::Until),
+            "R" => Ok(LtlBinaryOp::Release),
             "->" => Ok(LtlBinaryOp::Implies),
             "<->" => Ok(LtlBinaryOp::Equivalent),
             _ => Err(InvalidBinaryOp(value)),
@@ -106,6 +115,7 @@ impl Display for LtlBinaryOp {
             LtlBinaryOp::And => write!(f, "&"),
             LtlBinaryOp::Or => write!(f, "|"),
             LtlBinaryOp::Until => write!(f, "U"),
+            LtlBinaryOp::Release => write!(f, "R"),
             LtlBinaryOp::Implies => write!(f, "->"),
             LtlBinaryOp::Equivalent => write!(f, "<->"),
         }
@@ -126,6 +136,15 @@ mod test {
 
         let parsed = "U".try_into();
         assert_eq!(parsed, Ok(LtlBinaryOp::Until));
+
+        let parsed = "R".try_into();
+        assert_eq!(parsed, Ok(LtlBinaryOp::Release));
+
+        let parsed = "->".try_into();
+        assert_eq!(parsed, Ok(LtlBinaryOp::Implies));
+
+        let parsed = "<->".try_into();
+        assert_eq!(parsed, Ok(LtlBinaryOp::Equivalent));
 
         let parsed: Result<LtlBinaryOp, _> = ":".try_into();
         assert!(parsed.is_err());

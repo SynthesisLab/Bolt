@@ -109,10 +109,20 @@ impl CharSeq {
         CharSeq { values, length }
     }
 
-    /// LTL Next operator (X)
+    /// LTL (strong) Next operator (X[!])
     #[inline]
-    pub(crate) fn next(mut self) -> Self {
+    pub(crate) fn strong_next(mut self) -> Self {
         self.values >>= 1;
+        self
+    }
+
+    /// LTL (weak) Next operator (X)
+    #[inline]
+    pub(crate) fn weak_next(mut self) -> Self {
+        self.values >>= 1;
+        if self.length > 0 {
+            self.values |= 1u64 << (self.length - 1);
+        }
         self
     }
 
@@ -162,6 +172,12 @@ impl CharSeq {
         y |= x & (y >> 32);
         CharSeq { values: y, length }
     }
+
+    /// LTL Release operator (R)
+    #[inline]
+    pub(crate) fn release(self, rhs: Self) -> Self {
+        self.not().until(rhs.not()).not()
+    }
 }
 
 impl Debug for CharSeq {
@@ -208,7 +224,12 @@ mod tests {
 
     #[allow(non_snake_case)]
     pub(crate) fn X(phi: CharSeq) -> CharSeq {
-        phi.next()
+        phi.weak_next()
+    }
+
+    #[allow(non_snake_case)]
+    pub(crate) fn X_s(phi: CharSeq) -> CharSeq {
+        phi.strong_next()
     }
 
     #[allow(non_snake_case)]
@@ -224,6 +245,11 @@ mod tests {
     #[allow(non_snake_case)]
     pub(crate) fn U(phi: CharSeq, psi: CharSeq) -> CharSeq {
         phi.until(psi)
+    }
+
+    #[allow(non_snake_case)]
+    pub(crate) fn R(phi: CharSeq, psi: CharSeq) -> CharSeq {
+        phi.release(psi)
     }
 
     fn random_seq_with_len(len: usize, rng: &mut impl Rng) -> CharSeq {
@@ -320,7 +346,7 @@ mod tests {
     fn f_as_phi_or_x_f_phi() {
         for _ in 0..100 {
             let x = random_seq();
-            assert_eq!(F(x), x | X(F(x)));
+            assert_eq!(F(x), x | X_s(F(x)));
         }
     }
 
@@ -352,7 +378,23 @@ mod tests {
     fn expand_u() {
         for _ in 0..100 {
             let (x, y) = random_pair();
-            assert_eq!(U(x, y), y | (x & X(U(x, y))));
+            assert_eq!(U(x, y), y | (x & X_s(U(x, y))));
+        }
+    }
+
+    #[test]
+    fn expand_r() {
+        for _ in 0..100 {
+            let (x, y) = random_pair();
+            assert_eq!(R(x, y), y & (x | X(R(x, y))));
+        }
+    }
+
+    #[test]
+    fn r_dual_u() {
+        for _ in 0..100 {
+            let (x, y) = random_pair();
+            assert_eq!(R(x, y), !(U(!x, !y)));
         }
     }
 
