@@ -52,7 +52,7 @@ pub trait BoolAlgoParams {
 }
 
 /// Return a [`Vec`] containing all size-1 LTL formulas, that consist only of an atomic proposition.
-fn atoms(traces: &[Trace], atomic_propositions: Vec<String>) -> Vec<LtlFormula> {
+pub(crate) fn atoms(traces: &[Trace], atomic_propositions: Vec<String>) -> Vec<LtlFormula> {
     let mut atoms = Vec::new();
     for (i, s) in atomic_propositions.into_iter().enumerate() {
         let charac = traces
@@ -71,7 +71,10 @@ fn atoms(traces: &[Trace], atomic_propositions: Vec<String>) -> Vec<LtlFormula> 
 }
 
 /// Create an [`LtlCache`] containing all formulas in `atoms`.
-fn create_initial_cache(atoms: Vec<LtlFormula>, target: &[bool]) -> (Option<LtlFormula>, LtlCache) {
+pub(crate) fn create_initial_cache(
+    atoms: Vec<LtlFormula>,
+    target: &[bool],
+) -> (Option<LtlFormula>, LtlCache) {
     let mut ltl_cache = LtlCache::new();
     // Add empty line for size 0 in cache
     ltl_cache.new_line(0);

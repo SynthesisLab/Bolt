@@ -8,3 +8,6 @@ pub mod traits;
 
 /// Hash type of [`ltl::LtlFormula`] and [`bool::BoolFormula`], parametric for easier configuration.
 type HashType = u64;
+
+#[cfg(test)]
+mod tests;
