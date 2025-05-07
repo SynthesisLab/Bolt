@@ -60,7 +60,7 @@ fn main() {
 
 fn get_name_time_sol<P: BoolAlgoParams + Clone>(
     traces: Vec<Trace>,
-    alphabet: Vec<String>,
+    atomic_propositions: Vec<String>,
     operators: Operators,
     target: Vec<bool>,
     max_size_ltl: usize,
@@ -69,7 +69,7 @@ fn get_name_time_sol<P: BoolAlgoParams + Clone>(
 ) -> (f64, Option<FormulaTree>, &'static str) {
     let res = divide_conquer(
         &traces,
-        alphabet,
+        atomic_propositions,
         operators,
         target.clone(),
         max_size_ltl,

@@ -22,7 +22,7 @@ pub mod meta_res;
 /// LTL search followed by Divide and Conquer.
 pub fn divide_conquer<P>(
     traces: &[Trace],
-    alphabet: Vec<String>,
+    atomic_propositions: Vec<String>,
     operators: Operators,
     target: Vec<bool>,
     max_size_ltl: usize,
@@ -34,7 +34,7 @@ where
 {
     let start = Instant::now();
 
-    let atoms = atoms(traces, alphabet);
+    let atoms = atoms(traces, atomic_propositions);
     // Add initial formulas
     let (atom, mut ltl_cache) = create_initial_cache(atoms, &target);
     // Check if target is an atom

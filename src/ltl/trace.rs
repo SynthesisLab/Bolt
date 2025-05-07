@@ -14,10 +14,10 @@ pub struct Instance {
     pub operators: Operators,
 }
 
-/// Stores the [`CharSeq`] of each predicate on a given trace.
+/// Stores the [`CharSeq`] of each atomic_proposition on a given trace.
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct Trace {
-    pub alphabet: Vec<CharSeq>,
+    pub atomic_propositions: Box<[CharSeq]>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -66,12 +66,12 @@ pub fn parse_traces(buf: &str) -> Instance {
     let traces: Option<Vec<_>> = parsed_input
         .positive_traces
         .into_iter()
-        .map(|pt| pt.traces_vec_from_alphabet(&parsed_input.atomic_propositions))
+        .map(|pt| pt.traces_vec_from_atomic_props(&parsed_input.atomic_propositions))
         .chain(
             parsed_input
                 .negative_traces
                 .into_iter()
-                .map(|pt| pt.traces_vec_from_alphabet(&parsed_input.atomic_propositions)),
+                .map(|pt| pt.traces_vec_from_atomic_props(&parsed_input.atomic_propositions)),
         )
         .collect();
     let traces = traces.expect("Incorrect traces format");
@@ -95,7 +95,7 @@ pub fn parse_traces(buf: &str) -> Instance {
 #[derive(Debug, Clone, Deserialize)]
 pub struct ParsedTrace {
     #[serde(flatten)]
-    alphabet: HashMap<String, Vec<String>>,
+    atomic_propositions: HashMap<String, Vec<String>>,
 }
 
 /// Converts a vector of "0"/"1" strings to a CharSeq
@@ -110,13 +110,13 @@ fn vec_to_cs(v: &Vec<String>) -> CharSeq {
 }
 
 impl ParsedTrace {
-    pub fn traces_vec_from_alphabet(&self, alphabet: &[String]) -> Option<Trace> {
-        let char_seqs: Option<Vec<CharSeq>> = alphabet
+    pub fn traces_vec_from_atomic_props(&self, atomic_propositions: &[String]) -> Option<Trace> {
+        let char_seqs: Option<Box<[CharSeq]>> = atomic_propositions
             .iter()
-            .map(|s| self.alphabet.get(s).map(vec_to_cs))
+            .map(|s| self.atomic_propositions.get(s).map(vec_to_cs))
             .collect();
         Some(Trace {
-            alphabet: char_seqs?,
+            atomic_propositions: char_seqs?,
         })
     }
 }

@@ -10,17 +10,12 @@ pub mod cs;
 pub mod hash;
 pub mod trace;
 
+/// Represents an atomic proposition, e.g. `p`, `q`, `var0`, etc.
+///
+/// The first component is the string representation of the proposition,
+/// the second is its index in the vector of atomic propositions.
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
-pub struct Predicate(pub(crate) String, pub(crate) PredicateForm);
-
-/// Formula corresponding to a single variable `x_i`, which may be negated.
-#[derive(Debug, Hash, PartialEq, Eq, Clone)]
-pub enum PredicateForm {
-    /// Formula `x_i`
-    Positive(usize),
-    /// Formula `not x_i`
-    Negative(usize),
-}
+pub struct AtomicProposition(pub(crate) String, pub(crate) usize);
 
 pub(crate) type LtlFormula = Formula<LtlCharac>;
 

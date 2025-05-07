@@ -7,7 +7,7 @@ use crate::ltl::cm::CharMatrix;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum LtlUnaryOp {
-    // Not,
+    Not,
     WeakNext,
     StrongNext,
     Finally,
@@ -17,14 +17,13 @@ pub enum LtlUnaryOp {
 impl LtlUnaryOp {
     pub(crate) fn all() -> Vec<LtlUnaryOp> {
         use LtlUnaryOp::*;
-        vec![WeakNext, StrongNext, Finally, Globally]
-        // vec![Not, WeakNext, StrongNext, Finally, Globally]
+        vec![Not, WeakNext, StrongNext, Finally, Globally]
     }
 
     pub(crate) fn is_boolean_monotone(&self) -> bool {
         match self {
-            // LtlUnaryOp::Not => true,
-            LtlUnaryOp::WeakNext
+            LtlUnaryOp::Not
+            | LtlUnaryOp::WeakNext
             | LtlUnaryOp::StrongNext
             | LtlUnaryOp::Finally
             | LtlUnaryOp::Globally => false,
@@ -33,7 +32,7 @@ impl LtlUnaryOp {
 
     pub(crate) fn apply_cm(op: Self, cm: &CharMatrix) -> CharMatrix {
         match op {
-            // LtlUnaryOp::Not => cm.not(),
+            LtlUnaryOp::Not => cm.not(),
             LtlUnaryOp::WeakNext => cm.weak_next(),
             LtlUnaryOp::StrongNext => cm.strong_next(),
             LtlUnaryOp::Finally => cm.finally(),
@@ -55,13 +54,15 @@ impl<'a> TryFrom<&'a str> for LtlUnaryOp {
     ///
     /// | String |   Result  |
     /// |:-------|:---------------------|
+    /// | `"!"`  | [`LtlUnaryOp::Not`]  |
     /// | `"X"`  | [`LtlUnaryOp::WeakNext`]  |
     /// | `"X[!]"`  | [`LtlUnaryOp::StrongNext`]  |
     /// | `"F"`  | [`LtlUnaryOp::Finally`]   |
     /// | `"G"`  | [`LtlUnaryOp::Globally`]|
-    /// | Other value  | `Error` |
+    /// | Other value  | [`InvalidUnaryOp`] |
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
         match value {
+            "!" => Ok(LtlUnaryOp::Not),
             "X" => Ok(LtlUnaryOp::WeakNext),
             "X[!]" => Ok(LtlUnaryOp::StrongNext),
             "F" => Ok(LtlUnaryOp::Finally),
@@ -74,6 +75,7 @@ impl<'a> TryFrom<&'a str> for LtlUnaryOp {
 impl Display for LtlUnaryOp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            LtlUnaryOp::Not => write!(f, "!"),
             LtlUnaryOp::WeakNext => write!(f, "X"),
             LtlUnaryOp::StrongNext => write!(f, "X[!]"),
             LtlUnaryOp::Finally => write!(f, "F"),
@@ -88,6 +90,9 @@ mod test {
 
     #[test]
     fn string_try_into_unary_op() {
+        let parsed = "!".try_into();
+        assert_eq!(parsed, Ok(LtlUnaryOp::Not));
+
         let parsed = "X".try_into();
         assert_eq!(parsed, Ok(LtlUnaryOp::WeakNext));
 
@@ -105,7 +110,7 @@ mod test {
     }
 
     #[test]
-    fn binary_op_display_then_parse_is_ident() {
+    fn unary_op_display_then_parse_is_ident() {
         for op in LtlUnaryOp::all() {
             assert_eq!(Ok(op), format!("{op}").as_str().try_into())
         }

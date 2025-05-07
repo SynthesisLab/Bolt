@@ -14,18 +14,18 @@
 //!
 //! Implementing a Boolean Synthesis for use with meta-algorithms is done via
 //! the [`BoolAlgoParams`] trait.
-use std::{ops::Not, rc::Rc};
+use std::rc::Rc;
 
 use meta::cache::InitialBoolCache;
 
 use crate::{
     cache::{EnumFormulaCache, EnumFormulaCacheLine},
-    formula::{tree::FormulaTree, Formula},
+    formula::{Formula, tree::FormulaTree},
     ltl::{
+        AtomicProposition, LtlFormula,
         cache::LtlCache,
         charac::LtlCharac,
         trace::{Operators, Trace},
-        LtlFormula, Predicate, PredicateForm,
     },
     traits::EqTarget,
 };
@@ -51,34 +51,20 @@ pub trait BoolAlgoParams {
     fn name() -> &'static str;
 }
 
-/// Return a [`Vec`] containing all size-1 LTL formulas: the predicates and their negation.
-fn atoms(traces: &[Trace], alphabet: Vec<String>) -> Vec<LtlFormula> {
+/// Return a [`Vec`] containing all size-1 LTL formulas, that consist only of an atomic proposition.
+fn atoms(traces: &[Trace], atomic_propositions: Vec<String>) -> Vec<LtlFormula> {
     let mut atoms = Vec::new();
-    for (i, s) in alphabet.into_iter().enumerate() {
-        let charac = traces.iter().map(|t| t.alphabet[i]).collect::<LtlCharac>();
+    for (i, s) in atomic_propositions.into_iter().enumerate() {
+        let charac = traces
+            .iter()
+            .map(|t| t.atomic_propositions[i])
+            .collect::<LtlCharac>();
         let f = Formula::new_base(
             charac,
             1,
-            Rc::from(FormulaTree::Atom(Predicate(
-                s.clone(),
-                PredicateForm::Positive(i),
-            ))),
+            Rc::from(FormulaTree::Atom(AtomicProposition(s, i))),
         );
         atoms.push(f);
-
-        let charac = traces
-            .iter()
-            .map(|t| t.alphabet[i].not())
-            .collect::<LtlCharac>();
-        let not_f = Formula::new_base(
-            charac,
-            1,
-            Rc::from(FormulaTree::Atom(Predicate(
-                format!("!{s}"),
-                PredicateForm::Negative(i),
-            ))),
-        );
-        atoms.push(not_f);
     }
 
     atoms

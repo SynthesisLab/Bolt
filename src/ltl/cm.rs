@@ -1,7 +1,7 @@
 //! Characteristic Matrix of LTL formulas.
 use std::{
     hash::{Hash, Hasher},
-    ops::{BitAnd, BitOr},
+    ops::{BitAnd, BitOr, Not},
 };
 
 use crate::HashType;
@@ -74,7 +74,7 @@ impl CharMatrix {
         self.seqs.iter().map(|x| x.accepts()).collect()
     }
 
-    op_for_cm!(weak_next, strong_next, globally, finally);
+    op_for_cm!(not, weak_next, strong_next, globally, finally);
     binop_for_cm!(bitor as or);
     binop_for_cm!(bitand as and);
     binop_for_cm!(until);

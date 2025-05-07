@@ -1,15 +1,15 @@
 //! Explicit formula tree representation.
-use std::{fmt::Display, ops::Not, rc::Rc};
+use std::{fmt::Display, rc::Rc};
 
 use crate::{
-    ltl::{cm::CharMatrix, trace::Trace, Predicate, PredicateForm},
+    ltl::{AtomicProposition, cm::CharMatrix, trace::Trace},
     ops::{binary::LtlBinaryOp, unary::LtlUnaryOp},
 };
 
 /// Representation of an LTL as a tree of operators.
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum FormulaTree {
-    Atom(Predicate),
+    Atom(AtomicProposition),
     UnaryNode {
         op: LtlUnaryOp,
         child: Rc<FormulaTree>,
@@ -34,10 +34,9 @@ impl FormulaTree {
     /// Evaluate the formula on a set of input traces.
     pub fn eval(&self, traces: &[Trace]) -> CharMatrix {
         match self {
-            FormulaTree::Atom(Predicate(_, pf)) => match *pf {
-                PredicateForm::Positive(i) => traces.iter().map(|t| t.alphabet[i]).collect(),
-                PredicateForm::Negative(i) => traces.iter().map(|t| t.alphabet[i].not()).collect(),
-            },
+            FormulaTree::Atom(AtomicProposition(_, i)) => {
+                traces.iter().map(|t| t.atomic_propositions[*i]).collect()
+            }
             FormulaTree::UnaryNode { op, child } => {
                 let cm = child.eval(traces);
                 LtlUnaryOp::apply_cm(*op, &cm)
@@ -54,7 +53,7 @@ impl FormulaTree {
 impl Display for FormulaTree {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            FormulaTree::Atom(Predicate(p, _)) => write!(f, "{p}"),
+            FormulaTree::Atom(AtomicProposition(p, _)) => write!(f, "{p}"),
             FormulaTree::UnaryNode { op, child } => write!(f, "{op} ({child})"),
             FormulaTree::BinaryNode { op, left, right } => write!(f, "({left}) {op} ({right})"),
         }
