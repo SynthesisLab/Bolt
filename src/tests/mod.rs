@@ -308,3 +308,47 @@ fn finally_a_and_b() {
     let exp = F(AND(build_atom("a", 0), build_atom("b", 1)));
     test_ltl_search(example, exp);
 }
+
+#[test]
+fn a_and_b_and_c() {
+    let example = make_instance!(
+    pos: [
+        {
+            a: [1, 0, 1, 1],
+            b: [1, 0, 0, 1],
+            c: [1, 0, 1, 0]
+        },
+        {
+            a: [1, 1, 0],
+            b: [1, 0, 1],
+            c: [1, 1, 1]
+        }
+    ],
+    neg: [
+        {
+            a: [1, 1, 0, 0],
+            b: [0, 1, 1, 0],
+            c: [1, 1, 1, 0]
+        },
+        {
+            a: [1, 1, 0],
+            b: [0, 1, 1],
+            c: [0, 0, 1]
+        },
+        {
+            a: [0, 0, 1],
+            b: [0, 0, 1],
+            c: [0, 1, 1]
+        },
+        {
+            a: [0, 1, 0, 1],
+            b: [1, 1, 0, 0],
+            c: [1, 0, 1, 1]
+        }
+    ]);
+    let exp = AND(
+        AND(build_atom("a", 0), build_atom("b", 1)),
+        build_atom("c", 0),
+    );
+    test_ltl_search(example, exp);
+}
