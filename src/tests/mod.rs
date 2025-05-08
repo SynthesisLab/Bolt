@@ -80,6 +80,8 @@ fn test_ltl_search(instance: &str, expected: FormulaTree) {
 
     let f = rebuild_formula(&ltl_res.unwrap(), &ltl_cache);
     assert!(f.size() <= expected.size());
+    let v = f.eval(&instance.traces).accepted_vec();
+    assert_eq!(&v, &instance.target);
 }
 
 /// Converts an array of array of array of ints (yes)
