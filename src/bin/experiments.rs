@@ -18,44 +18,33 @@ fn main() {
     let args = CliArgs::parse();
     let instance = traces_from_file(&args.input_filename);
 
-    let (time, sol, name) = match args.command {
-        AlgoCommand::Enum(p) => get_name_time_sol(
-            instance.traces,
-            instance.atomic_propositions,
-            instance.operators,
-            instance.target,
-            args.max_size_ltl,
-            args.domin_nb,
-            p,
-        ),
-        AlgoCommand::SetCover(p) => get_name_time_sol(
-            instance.traces,
-            instance.atomic_propositions,
-            instance.operators,
-            instance.target,
-            args.max_size_ltl,
-            args.domin_nb,
-            p,
-        ),
-        AlgoCommand::BeamSearch(p) => get_name_time_sol(
-            instance.traces,
-            instance.atomic_propositions,
-            instance.operators,
-            instance.target,
-            args.max_size_ltl,
-            args.domin_nb,
-            p,
-        ),
-    };
+    match args.command {
+        AlgoCommand::BeamSearch(p) => {
+            let (time, sol, name) = get_name_time_sol(
+                instance.traces,
+                instance.atomic_propositions,
+                instance.operators,
+                instance.target,
+                args.max_size_ltl,
+                args.domin_nb,
+                p,
+            );
 
-    println!(
-        "rust_{}, {}, {:.5}, {}, {}",
-        name,
-        args.input_filename.to_string_lossy(),
-        time,
-        sol.as_ref().map_or(-1, |f| f.size() as isize),
-        sol.map_or(String::new(), |f| format!("{f}"))
-    )
+            println!(
+                "rust_{}, {}, {:.5}, {}, {}, {}, {}, {}, {}",
+                name,
+                args.input_filename.to_string_lossy(),
+                time,
+                args.max_size_ltl,
+                args.domin_nb,
+                p.beam_width,
+                p.max_size_bool,
+                sol.as_ref().map_or(-1, |f| f.size() as isize),
+                sol.map_or(String::new(), |f| format!("{f}"))
+            )
+        }
+        _ => panic!("Wrong command used for experiments"),
+    };
 }
 
 fn get_name_time_sol<P: BoolAlgoParams + Clone>(

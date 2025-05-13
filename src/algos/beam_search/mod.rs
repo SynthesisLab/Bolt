@@ -8,7 +8,7 @@ use clap::Args;
 
 use crate::{
     algos::enumeration::aux::enum_aux,
-    bool::{charac::BoolCharac, cv::CharVec, BoolFormula},
+    bool::{BoolFormula, charac::BoolCharac, cv::CharVec},
     cache::{EnumFormulaCache, EnumFormulaCacheLine},
     formula::{rebuild_formula, tree::FormulaTree},
     ltl::trace::Operators,
@@ -16,14 +16,14 @@ use crate::{
 
 pub mod cache;
 
-use super::{meta::cache::InitialBoolCache, BoolAlgoParams};
+use super::{BoolAlgoParams, meta::cache::InitialBoolCache};
 
 #[derive(Args, Clone, Copy)]
 pub struct BeamSearchParams {
     /// Number of formulas to keep at each level.
-    beam_width: usize,
+    pub beam_width: usize,
     /// Maximum enumeration size
-    max_size_bool: usize,
+    pub max_size_bool: usize,
 }
 
 impl BoolAlgoParams for BeamSearchParams {
