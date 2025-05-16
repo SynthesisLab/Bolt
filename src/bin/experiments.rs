@@ -78,7 +78,7 @@ fn get_name_time_sol<P: BoolAlgoParams + Clone>(
 #[derive(Parser)]
 // #[command(version, about, long_about = None)]
 struct CliArgs {
-    /// Name of the .trace file to read.
+    /// Name of the .json file to read.
     input_filename: PathBuf,
     /// Run LTL enumeration until `max_size_ltl`
     /// before switching to boolean algorithm.

@@ -2,7 +2,10 @@ use std::{collections::HashMap, fs::File, io::Read, path::Path};
 
 use serde::Deserialize;
 
-use crate::ops::{binary::LtlBinaryOp, unary::LtlUnaryOp};
+use crate::{
+    formula::tree::{FormulaTree, parse_ltl_formula},
+    ops::{binary::LtlBinaryOp, unary::LtlUnaryOp},
+};
 
 use super::cs::CharSeq;
 
@@ -12,6 +15,7 @@ pub struct Instance {
     pub atomic_propositions: Vec<String>,
     pub target: Vec<bool>,
     pub operators: Operators,
+    pub formula: Option<FormulaTree>,
 }
 
 /// Stores the [`CharSeq`] of each atomic_proposition on a given trace.
@@ -84,11 +88,18 @@ pub fn parse_traces(buf: &str) -> Instance {
     // Operators filtering is not implemented in current input format.
     let operators = Operators::all();
 
+    let formula = parsed_input
+        .smallest_known_formula
+        .into_iter()
+        .flat_map(|expr| parse_ltl_formula(&expr, &parsed_input.atomic_propositions))
+        .next();
+
     Instance {
         traces,
         atomic_propositions: parsed_input.atomic_propositions,
         target,
         operators,
+        formula,
     }
 }
 
@@ -126,6 +137,7 @@ pub struct ParsedInput {
     positive_traces: Vec<ParsedTrace>,
     negative_traces: Vec<ParsedTrace>,
     atomic_propositions: Vec<String>,
+    smallest_known_formula: Option<String>,
     number_positive_traces: usize,
     number_negative_traces: usize,
     max_length_traces: usize,

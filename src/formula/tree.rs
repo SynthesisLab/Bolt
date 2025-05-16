@@ -85,7 +85,7 @@ lazy_static::lazy_static! {
 
         // Precedence is defined lowest to highest
         PrattParser::new()
-            // Addition and subtract have equal precedence
+            // Implies and Equivalent have equal precedence
             .op(Op::infix(implies, Right) | Op::infix(equiv, Right))
             .op(Op::infix(or, Left))
             .op(Op::infix(and, Left))
@@ -96,7 +96,10 @@ lazy_static::lazy_static! {
     };
 }
 
-pub fn parse_expr(expr: &str, atomic_props: &[String]) -> Result<FormulaTree, LtlParsingError> {
+pub fn parse_ltl_formula(
+    expr: &str,
+    atomic_props: &[String],
+) -> Result<FormulaTree, LtlParsingError> {
     let mut pairs = LtlParser::parse(Rule::ltl_expr, expr)?;
     let res = parse_pairs(
         pairs
@@ -125,7 +128,7 @@ fn parse_pairs(
             }
             Rule::expr => parse_pairs(primary.into_inner(), atomic_props),
             rule => unreachable!(
-                "FormulaTree::parse expected atom, found {:?} {}",
+                "FormulaTree::parse expected prop or expr, found {:?} {}",
                 rule,
                 primary.as_str()
             ),

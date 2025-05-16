@@ -1,5 +1,5 @@
 use crate::{
-    formula::tree::parse_expr,
+    formula::tree::parse_ltl_formula,
     tests::{G, Not},
 };
 
@@ -18,7 +18,7 @@ fn test_parsing_fixed() {
         ("G(a0)", G(a0())),
         ("G(!(a0))", G(Not(a0()))),
     ] {
-        let f = parse_expr(expr, &atomic_props).unwrap();
+        let f = parse_ltl_formula(expr, &atomic_props).unwrap();
         assert_eq!(f, expected)
     }
 }
@@ -33,7 +33,7 @@ fn test_parsing_gfand() {
     let p2 = || build_atom("p2", 1);
     let p3 = || build_atom("p3", 2);
     for (expr, expected) in [("G p1 && F p2 && F p3", AND(AND(G(p1()), F(p2())), F(p3())))] {
-        let f = parse_expr(expr, &atomic_props).unwrap();
+        let f = parse_ltl_formula(expr, &atomic_props).unwrap();
         assert_eq!(f, expected)
     }
 }
