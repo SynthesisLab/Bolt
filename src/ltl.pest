@@ -18,7 +18,7 @@ not         =  { "!" }
 globally    =  { "G" }
 finally     =  { "F" }
 primary     = _{ "(" ~ expr ~ ")" | prop }
-atom        = _{ prefix? ~ primary }
-prop        = @{ ASCII_ALPHA_LOWER ~ ASCII_ALPHANUMERIC* }
+atom        = _{ prefix* ~ primary }
+prop        = @{ ASCII_ALPHA_LOWER ~ (ASCII_ALPHANUMERIC | "_")* }
 
 WHITESPACE = _{ " " | "\t" }

@@ -3,7 +3,7 @@ use crate::{
     tests::{G, Not},
 };
 
-use super::{AND, F, IMP, U, build_atom};
+use super::{AND, EQ, F, IMP, SX, U, X, build_atom};
 
 #[test]
 fn test_parsing_fixed() {
@@ -33,6 +33,25 @@ fn test_parsing_gfand() {
     let p2 = || build_atom("p2", 1);
     let p3 = || build_atom("p3", 2);
     for (expr, expected) in [("G p1 && F p2 && F p3", AND(AND(G(p1()), F(p2())), F(p3())))] {
+        let f = parse_ltl_formula(expr, &atomic_props).unwrap();
+        assert_eq!(f, expected)
+    }
+}
+
+#[test]
+fn test_double_unary() {
+    let atomic_props: Vec<_> = ["a", "b", "c"].into_iter().map(|s| s.to_owned()).collect();
+
+    let a = || build_atom("a", 0);
+    let b = || build_atom("b", 1);
+    let c = || build_atom("c", 2);
+    for (expr, expected) in [
+        ("X G a && F X[!] b", AND(X(G(a())), F(SX(b())))),
+        (
+            "X X a <=> G G b -> F F c",
+            EQ(X(X(a())), IMP(G(G(b())), F(F(c())))),
+        ),
+    ] {
         let f = parse_ltl_formula(expr, &atomic_props).unwrap();
         assert_eq!(f, expected)
     }
