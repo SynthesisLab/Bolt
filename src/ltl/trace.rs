@@ -95,15 +95,15 @@ pub fn parse_traces(buf: &str) -> Instance {
 #[derive(Debug, Clone, Deserialize)]
 pub struct ParsedTrace {
     #[serde(flatten)]
-    atomic_propositions: HashMap<String, Vec<String>>,
+    atomic_propositions: HashMap<String, Vec<usize>>,
 }
 
-/// Converts a vector of "0"/"1" strings to a CharSeq
-fn vec_to_cs(v: &Vec<String>) -> CharSeq {
+/// Converts a vector of 0/1 ints to a CharSeq
+fn vec_to_cs(v: &Vec<usize>) -> CharSeq {
     v.iter()
-        .map(|c| match c {
-            s if s == "0" => false,
-            s if s == "1" => true,
+        .map(|x| match *x {
+            0 => false,
+            1 => true,
             _ => panic!("Unexpected literal in traces definition"),
         })
         .collect()
@@ -137,7 +137,7 @@ mod test {
 
     #[test]
     fn convert_vec_to_cs() {
-        let v = vec!["1".into(), "0".into(), "1".into()];
+        let v = vec![1, 0, 1];
         let cs = vec_to_cs(&v);
         assert_eq!(cs.len(), 3);
         assert_eq!(cs.values, 0b101);
@@ -149,26 +149,26 @@ mod test {
 {
     "positive_traces": [
         {
-            "a0": ["0", "1", "1", "0"],
-            "a1": ["0", "1", "0", "1"]
+            "a0": [0, 1, 1, 0],
+            "a1": [0, 1, 0, 1]
         }
     ],
     "negative_traces": [
         {
-            "a0": ["1", "1", "1", "0"],
-            "a1": ["0", "1", "0", "1"]
+            "a0": [1, 1, 1, 0],
+            "a1": [0, 1, 0, 1]
         },
         {
-            "a0": ["0", "1", "1", "0"],
-            "a1": ["0", "1", "1", "1"]
+            "a0": [0, 1, 1, 0],
+            "a1": [0, 1, 1, 1]
         },
         {
-            "a0": ["0", "1", "1", "1"],
-            "a1": ["0", "1", "0", "1"]
+            "a0": [0, 1, 1, 1],
+            "a1": [0, 1, 0, 1]
         },
         {
-            "a0": ["0", "1", "1", "0"],
-            "a1": ["0", "1", "0", "0"]
+            "a0": [0, 1, 1, 0],
+            "a1": [0, 1, 0, 0]
         }
     ],
     "smallest_known_formula": "",
