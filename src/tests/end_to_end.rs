@@ -3,10 +3,10 @@ use itertools::Itertools;
 use crate::{
     algos::{atoms, create_initial_cache, enumeration::aux::enum_aux},
     formula::{rebuild_formula, tree::FormulaTree},
-    ltl::trace::parse_traces,
+    ltl::{Constant, trace::parse_traces},
 };
 
-use super::{AND, F, G, Not, OR, SX, build_atom};
+use super::{AND, F, G, Not, OR, SX, build_atom, build_const};
 
 fn test_ltl_search(instance: &str, expected: FormulaTree) {
     let instance = parse_traces(&instance);
@@ -17,6 +17,7 @@ fn test_ltl_search(instance: &str, expected: FormulaTree) {
     );
 
     let atoms = atoms(&instance.traces, instance.atomic_propositions);
+
     // Add initial formulas
     let (atom, mut ltl_cache) = create_initial_cache(atoms, &instance.target);
     if let Some(f) = atom {
@@ -120,6 +121,14 @@ fn instance_str(
 }
 
 macro_rules! make_instance {
+    (pos : [],
+     neg: [$( { $( $name:ident : [$($v2:literal),*]),* }), *]) => {
+        &instance_str(
+            &[ ],
+            &[ $( &[ $( &[ $( $v2),* ]),* ]),*],
+            & helper!{ $([ $( $name ),* ]),* }
+        )
+    };
     (pos : [$( { $( $name:ident : [$($v:literal),*]),* }), *],
      neg: [$( { $( $name2:ident : [$($v2:literal),*]),* }), *]) => {
         &instance_str(
@@ -306,5 +315,45 @@ fn a_and_b_and_c() {
         AND(build_atom("a", 0), build_atom("b", 1)),
         build_atom("c", 0),
     );
+    test_ltl_search(example, exp);
+}
+
+#[test]
+fn empty_neg_is_true() {
+    let example = make_instance!(
+    pos: [
+        {
+            a: [1, 0, 1, 1],
+            b: [1, 0, 0, 1],
+            c: [1, 0, 1, 0]
+        },
+        {
+            a: [1, 1, 0],
+            b: [1, 0, 1],
+            c: [1, 1, 1]
+        }
+    ],
+    neg: []);
+    let exp = build_const(Constant::True);
+    test_ltl_search(example, exp);
+}
+
+#[test]
+fn empty_pos_is_false() {
+    let example = make_instance!(
+    pos: [ ],
+    neg: [
+        {
+            a: [1, 0, 1, 1],
+            b: [1, 0, 0, 1],
+            c: [1, 0, 1, 0]
+        },
+        {
+            a: [1, 1, 0],
+            b: [1, 0, 1],
+            c: [1, 1, 1]
+        }
+    ]);
+    let exp = build_const(Constant::False);
     test_ltl_search(example, exp);
 }

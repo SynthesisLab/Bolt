@@ -25,6 +25,7 @@ use crate::{
         AtomicProposition, Constant, LtlFormula,
         cache::LtlCache,
         charac::LtlCharac,
+        cm::CharMatrix,
         trace::{Operators, Trace},
     },
     traits::EqTarget,
@@ -56,22 +57,16 @@ pub(crate) fn atoms(traces: &[Trace], atomic_propositions: Vec<String>) -> Vec<L
     let mut atoms = Vec::new();
 
     let true_f = Formula::new_base(
-        traces
-            .iter()
-            .filter_map(|t| t.atomic_propositions.first().map(|&p| p | !p))
-            .collect::<LtlCharac>(),
+        LtlCharac::new(CharMatrix::true_like(traces)),
         1,
         Rc::from(FormulaTree::Const(Constant::True)),
     );
     atoms.push(true_f);
 
     let false_f = Formula::new_base(
-        traces
-            .iter()
-            .filter_map(|t| t.atomic_propositions.first().map(|&p| p | !p))
-            .collect::<LtlCharac>(),
+        LtlCharac::new(CharMatrix::false_like(traces)),
         1,
-        Rc::from(FormulaTree::Const(Constant::True)),
+        Rc::from(FormulaTree::Const(Constant::False)),
     );
     atoms.push(false_f);
 
