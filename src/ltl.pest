@@ -1,0 +1,24 @@
+ltl_expr = _{ SOI ~ expr ~ EOI }
+expr     =  { atom ~ (infix ~ atom)* }
+
+/// Infix (binary) ops
+infix   = _{ or | and | until | release | implies | equiv }
+or      =  { "||" | "|" }
+and     =  { "&&" | "&" }
+until   =  { "U" }
+release =  { "R" }
+implies =  { "->" | "=>" }
+equiv   =  { "<->" | "<=>" }
+
+/// Prefix (unary) ops
+prefix      = _{ strong_next | weak_next | not | globally | finally }
+strong_next =  { "X[!]" }
+weak_next   =  { "X" }
+not         =  { "!" }
+globally    =  { "G" }
+finally     =  { "F" }
+primary     = _{ "(" ~ expr ~ ")" | prop }
+atom        = _{ prefix? ~ primary }
+prop        = @{ ASCII_ALPHA_LOWER ~ ASCII_ALPHANUMERIC* }
+
+WHITESPACE = _{ " " | "\t" }
