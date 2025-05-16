@@ -6,7 +6,7 @@ use std::{
 
 use crate::HashType;
 
-use super::{cs::CharSeq, hash::LtlHash};
+use super::{cs::CharSeq, hash::LtlHash, trace::Trace};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct CharMatrix {
@@ -27,6 +27,19 @@ impl CharMatrix {
             .iter()
             .zip(target)
             .all(|(cm, b)| cm.accepts() == *b)
+    }
+
+    pub(crate) fn true_like(traces: &[Trace]) -> Self {
+        traces
+            .iter()
+            .filter_map(|t| t.atomic_propositions.first().map(|&p| p | !p))
+            .collect()
+    }
+    pub(crate) fn false_like(traces: &[Trace]) -> Self {
+        traces
+            .iter()
+            .filter_map(|t| t.atomic_propositions.first().map(|&p| p & !p))
+            .collect()
     }
 }
 

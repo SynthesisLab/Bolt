@@ -1,9 +1,10 @@
 use crate::{
     formula::tree::parse_ltl_formula,
+    ltl::Constant,
     tests::{G, Not},
 };
 
-use super::{AND, EQ, F, IMP, SX, U, X, build_atom};
+use super::{AND, EQ, F, IMP, SX, U, X, build_atom, build_const};
 
 #[test]
 fn test_parsing_fixed() {
@@ -51,6 +52,22 @@ fn test_double_unary() {
             "X X a <=> G G b -> F F c",
             EQ(X(X(a())), IMP(G(G(b())), F(F(c())))),
         ),
+    ] {
+        let f = parse_ltl_formula(expr, &atomic_props).unwrap();
+        assert_eq!(f, expected)
+    }
+}
+
+#[test]
+fn test_constants() {
+    let atomic_props: Vec<_> = ["a"].into_iter().map(|s| s.to_owned()).collect();
+
+    let a = || build_atom("a", 0);
+    let cfalse = || build_const(Constant::False);
+    let ctrue = || build_const(Constant::True);
+    for (expr, expected) in [
+        ("X ! ! a -> false", IMP(X(Not(Not(a()))), cfalse())),
+        ("true <-> !false", EQ(ctrue(), Not(cfalse()))),
     ] {
         let f = parse_ltl_formula(expr, &atomic_props).unwrap();
         assert_eq!(f, expected)

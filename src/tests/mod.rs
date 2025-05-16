@@ -1,10 +1,10 @@
+mod end_to_end;
 mod formula_parser;
-mod trace_parser;
 use std::rc::Rc;
 
 use crate::{
     formula::tree::FormulaTree,
-    ltl::AtomicProposition,
+    ltl::{AtomicProposition, Constant},
     ops::{binary::LtlBinaryOp, unary::LtlUnaryOp},
 };
 
@@ -56,4 +56,8 @@ helper_ops_binary!(
 
 fn build_atom(s: &str, i: usize) -> FormulaTree {
     FormulaTree::Atom(AtomicProposition(s.into(), i))
+}
+
+fn build_const(c: Constant) -> FormulaTree {
+    FormulaTree::Const(c)
 }

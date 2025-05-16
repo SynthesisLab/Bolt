@@ -2,13 +2,14 @@
 use std::{fmt::Display, rc::Rc};
 
 use crate::{
-    ltl::{AtomicProposition, cm::CharMatrix, trace::Trace},
+    ltl::{AtomicProposition, Constant, cm::CharMatrix, trace::Trace},
     ops::{binary::LtlBinaryOp, unary::LtlUnaryOp},
 };
 
 /// Representation of an LTL as a tree of operators.
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum FormulaTree {
+    Const(Constant),
     Atom(AtomicProposition),
     UnaryNode {
         op: LtlUnaryOp,
@@ -25,7 +26,7 @@ impl FormulaTree {
     /// Compute the size of the formula.
     pub fn size(&self) -> usize {
         match self {
-            FormulaTree::Atom(_) => 1,
+            FormulaTree::Atom(_) | FormulaTree::Const(_) => 1,
             FormulaTree::UnaryNode { child, .. } => 1 + child.size(),
             FormulaTree::BinaryNode { left, right, .. } => 1 + left.size() + right.size(),
         }
@@ -34,6 +35,10 @@ impl FormulaTree {
     /// Evaluate the formula on a set of input traces.
     pub fn eval(&self, traces: &[Trace]) -> CharMatrix {
         match self {
+            FormulaTree::Const(constant) => match constant {
+                Constant::False => CharMatrix::false_like(traces),
+                Constant::True => CharMatrix::true_like(traces),
+            },
             FormulaTree::Atom(AtomicProposition(_, i)) => {
                 traces.iter().map(|t| t.atomic_propositions[*i]).collect()
             }
@@ -53,6 +58,7 @@ impl FormulaTree {
 impl Display for FormulaTree {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            FormulaTree::Const(c) => write!(f, "{c}"),
             FormulaTree::Atom(AtomicProposition(p, _)) => write!(f, "{p}"),
             FormulaTree::UnaryNode { op, child } => write!(f, "{op} ({child})"),
             FormulaTree::BinaryNode { op, left, right } => write!(f, "({left}) {op} ({right})"),
@@ -127,6 +133,8 @@ fn parse_pairs(
                 Ok(FormulaTree::Atom(AtomicProposition(s, i)))
             }
             Rule::expr => parse_pairs(primary.into_inner(), atomic_props),
+            Rule::r#false => Ok(FormulaTree::Const(Constant::False)),
+            Rule::r#true => Ok(FormulaTree::Const(Constant::True)),
             rule => unreachable!(
                 "FormulaTree::parse expected prop or expr, found {:?} {}",
                 rule,

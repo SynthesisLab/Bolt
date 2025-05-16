@@ -22,7 +22,7 @@ use crate::{
     cache::{EnumFormulaCache, EnumFormulaCacheLine},
     formula::{Formula, tree::FormulaTree},
     ltl::{
-        AtomicProposition, LtlFormula,
+        AtomicProposition, Constant, LtlFormula,
         cache::LtlCache,
         charac::LtlCharac,
         trace::{Operators, Trace},
@@ -54,6 +54,27 @@ pub trait BoolAlgoParams {
 /// Return a [`Vec`] containing all size-1 LTL formulas, that consist only of an atomic proposition.
 pub(crate) fn atoms(traces: &[Trace], atomic_propositions: Vec<String>) -> Vec<LtlFormula> {
     let mut atoms = Vec::new();
+
+    let true_f = Formula::new_base(
+        traces
+            .iter()
+            .filter_map(|t| t.atomic_propositions.first().map(|&p| p | !p))
+            .collect::<LtlCharac>(),
+        1,
+        Rc::from(FormulaTree::Const(Constant::True)),
+    );
+    atoms.push(true_f);
+
+    let false_f = Formula::new_base(
+        traces
+            .iter()
+            .filter_map(|t| t.atomic_propositions.first().map(|&p| p | !p))
+            .collect::<LtlCharac>(),
+        1,
+        Rc::from(FormulaTree::Const(Constant::True)),
+    );
+    atoms.push(false_f);
+
     for (i, s) in atomic_propositions.into_iter().enumerate() {
         let charac = traces
             .iter()

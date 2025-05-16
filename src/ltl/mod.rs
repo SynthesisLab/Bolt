@@ -1,4 +1,6 @@
 //! Types used for LTL Formulas
+use std::fmt::Display;
+
 use charac::LtlCharac;
 
 use super::formula::Formula;
@@ -9,6 +11,22 @@ pub mod cm;
 pub mod cs;
 pub mod hash;
 pub mod trace;
+
+/// Constants, either true or false
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
+pub enum Constant {
+    False,
+    True,
+}
+
+impl Display for Constant {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Constant::False => write!(f, "false"),
+            Constant::True => write!(f, "true"),
+        }
+    }
+}
 
 /// Represents an atomic proposition, e.g. `p`, `q`, `var0`, etc.
 ///

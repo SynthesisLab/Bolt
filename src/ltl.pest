@@ -17,8 +17,11 @@ weak_next   =  { "X" }
 not         =  { "!" }
 globally    =  { "G" }
 finally     =  { "F" }
-primary     = _{ "(" ~ expr ~ ")" | prop }
+primary     = _{ "(" ~ expr ~ ")" | constant | prop }
 atom        = _{ prefix* ~ primary }
 prop        = @{ ASCII_ALPHA_LOWER ~ (ASCII_ALPHANUMERIC | "_")* }
+constant    = _{ true | false }
+true        =  { "true" }
+false       =  { "false" }
 
 WHITESPACE = _{ " " | "\t" }

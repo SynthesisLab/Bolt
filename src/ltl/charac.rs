@@ -18,27 +18,31 @@ pub(crate) struct LtlCharac {
     cm_hash: LtlHash,
 }
 
+impl LtlCharac {
+    pub(crate) fn new(cm: CharMatrix) -> Self {
+        let cm_hash = cm.hashed();
+        Self { cm, cm_hash }
+    }
+}
+
 impl FromIterator<CharSeq> for LtlCharac {
     fn from_iter<T: IntoIterator<Item = CharSeq>>(iter: T) -> Self {
         let cm = iter.into_iter().collect::<CharMatrix>();
-        let cm_hash = cm.hashed();
-        Self { cm, cm_hash }
+        Self::new(cm)
     }
 }
 
 impl UnaryOp for LtlCharac {
     fn apply(op: LtlUnaryOp, f: &Self) -> Self {
         let cm = LtlUnaryOp::apply_cm(op, &f.cm);
-        let cm_hash = cm.hashed();
-        Self { cm, cm_hash }
+        Self::new(cm)
     }
 }
 
 impl BinaryOp for LtlCharac {
     fn apply(op: LtlBinaryOp, f1: &Self, f2: &Self) -> Self {
         let cm = LtlBinaryOp::apply_cm(op, &f1.cm, &f2.cm);
-        let cm_hash = cm.hashed();
-        Self { cm, cm_hash }
+        Self::new(cm)
     }
 }
 
