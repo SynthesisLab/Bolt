@@ -6,6 +6,8 @@ use crate::{
 
 use super::{AND, EQ, F, IMP, SX, U, X, build_atom, build_const};
 
+mod generated;
+
 #[test]
 fn test_parsing_fixed() {
     let atomic_props: Vec<_> = ["a0", "a1"].into_iter().map(|s| s.to_owned()).collect();
