@@ -28,7 +28,10 @@ fn main() {
         AlgoCommand::BeamSearch(p) => get_name_time_sol(&input_filename, max_size_ltl, domin_nb, p),
     };
 
-    println!("{}", sol.map_or(String::new(), |f| format!("{f}")))
+    println!(
+        "{}",
+        sol.map_or(String::from("Formula not found"), |f| format!("{f}"))
+    )
 }
 
 fn get_name_time_sol<P: BoolAlgoParams + Clone>(
@@ -61,7 +64,7 @@ fn get_name_time_sol<P: BoolAlgoParams + Clone>(
 #[derive(Parser)]
 // #[command(version, about, long_about = None)]
 struct CliArgs {
-    /// Name of the .trace file to read.
+    /// Name of the .json file to read.
     input_filename: PathBuf,
     /// Run LTL enumeration until `max_size_ltl`
     /// before switching to boolean algorithm.
