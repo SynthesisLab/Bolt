@@ -1,17 +1,17 @@
-# Bolt: Blazingly Fast LTL Learning
+# Bolt: Blazingly Fast LTL$_f$ (and LTL) Learning
 
-This repository contains the code accompanying our paper *LTLf Learning Meets Boolean Set Cover*. It provides instructions for running the code and reproducing our experimental results.
+This repository contains the code accompanying the paper [*LTL$_f$ Learning Meets Boolean Set Cover*](https://arxiv.org/abs/2509.24616), by Gabriel Bathie, Nathanaël Fijalkow, Théo Matricon, Baptiste Mouillon, and Pierre Vandenhove. It provides instructions for running the code and reproducing our experimental results.
+
+A benchmark suite for LTL$_f$ is provided in a [separate repository](https://github.com/SynthesisLab/LTLf_Learning_Benchmarks).
 
 ## Requirements
-To run the code, you need to have [Rust](https://www.rust-lang.org/tools/install) installed. The code can be compiled using:
-
+To run the code, you need to have [Rust](https://www.rust-lang.org/tools/install) installed. The code can then be compiled using:
 ```
 cargo build --release
 ```
 
 ## Running the code
-
-The three algorithms (`set-cover`, `enum`, `beam-search`) can be run with multiple parameters by changing command line arguments. For instance,
+Three algorithms (`beam-search`, `set-cover`, `enum`) can be run with multiple parameters by changing command line arguments. For instance,
 ```
 cargo run --release -- example_input.json 8 10 beam-search 100 70
 ```
