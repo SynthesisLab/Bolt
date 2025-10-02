@@ -35,9 +35,9 @@ where
     let start = Instant::now();
 
     let atoms = atoms(traces, atomic_propositions);
-    // Add initial formulas
+    // Add initial formulas.
     let (atom, mut ltl_cache) = create_initial_cache(atoms, &target);
-    // Check if target is an atom
+    // Check if target is an atom.
     if let Some(f) = atom {
         let ltl_time = start.elapsed();
         let f_str = rebuild_formula(&f, &ltl_cache);
@@ -51,7 +51,7 @@ where
         };
     }
 
-    // Ltl search
+    // LTL search
     let ltl_res = enum_aux(&mut ltl_cache, &operators, &target, max_size_ltl);
 
     let ltl_time = start.elapsed();
@@ -87,7 +87,7 @@ where
     }
 }
 
-/// Solve Boolean Synthesis problem using Divide and Conquer and the algorithm specified in `params`.
+/// Solve Boolean Set Cover problem using Divide and Conquer and the algorithm specified in `params`.
 ///
 /// If the number of traces is more than 128, split immediately.
 /// Otherwise, try to solve the instance with the algorithm implemented by `params`.
@@ -104,7 +104,7 @@ where
     P: BoolAlgoParams + Clone,
 {
     let nb_traces = target.len();
-    // Check whether the fom
+    // Check whether the formula is already in the cache.
     if let Some(f) = initial_cache.get_from_cv(target, target) {
         // Due to hash collisions, the formula may not be right; we check that
         // the formula has the right characteristic vector.
@@ -170,7 +170,7 @@ where
     })
 }
 
-/// Divide and conquer subrouting to split into two subproblems with clever merging.
+/// Divide and conquer subroutine to split into two subproblems with clever merging.
 ///
 /// We use [`find_split`] to get indices for the left subproblem, and solve it recursively.
 /// If we get a solution, use the set of unsatisfied indices for the right subproblem,
@@ -259,7 +259,7 @@ where
 /// of traces to keeps in each split.
 ///  
 /// If the split was on the positives, the returned operation is [`LtlBinaryOp::Or`],
-/// and otherwise it's [`LtlBinaryOp::And`].
+/// and otherwise it is [`LtlBinaryOp::And`].
 fn find_split(target: &[bool]) -> Option<(LtlBinaryOp, Vec<usize>, Vec<usize>)> {
     let nb_traces = target.len();
     let nb_pos = target.iter().filter(|b| **b).count();

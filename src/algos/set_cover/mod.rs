@@ -1,4 +1,4 @@
-//! Set cover algorithm for Boolean Synthesis.
+//! Set cover algorithm for Boolean Set Cover.
 //!
 //! Produces Or-of-And or And-of-Or formulas in a greedy fashion.
 

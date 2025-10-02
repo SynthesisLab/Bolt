@@ -317,7 +317,7 @@ mod tests {
     }
 
     #[test]
-    /// Test "DeMorgan" identities for LTL operators
+    /// Test "De Morgan" identities for LTL operators
     fn de_morgan_or_and() {
         for _ in 0..100 {
             let (x1, x2) = random_pair();
@@ -326,7 +326,7 @@ mod tests {
     }
 
     #[test]
-    /// Test "DeMorgan" identities for LTL operators
+    /// Test "De Morgan" identities for LTL operators
     fn de_morgan_f_g() {
         for _ in 0..100 {
             let x = random_seq();

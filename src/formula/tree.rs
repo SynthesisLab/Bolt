@@ -6,7 +6,7 @@ use crate::{
     ops::{binary::LtlBinaryOp, unary::LtlUnaryOp},
 };
 
-/// Representation of an LTL as a tree of operators.
+/// Representation of an LTL formula as a tree of operators.
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum FormulaTree {
     Const(Constant),
@@ -89,9 +89,9 @@ lazy_static::lazy_static! {
         use pest::pratt_parser::{Assoc::*, Op};
         use Rule::*;
 
-        // Precedence is defined lowest to highest
+        // Precedence is defined lowest to highest.
         PrattParser::new()
-            // Implies and Equivalent have equal precedence
+            // Implies and Equivalent have equal precedence.
             .op(Op::infix(implies, Right) | Op::infix(equiv, Right))
             .op(Op::infix(or, Left))
             .op(Op::infix(and, Left))

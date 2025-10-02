@@ -1,18 +1,18 @@
-//! (Meta-)Algorithms for LTL and Boolean Synthesis.
+//! (Meta-)Algorithms for LTL and Boolean Set Cover
 //!
 //! Meta-algorithms first run an LTL enumeration algorithm for a fixed number of iterations,
-//! if no solution is found, they run a Boolean Synthesis on the set of LTL formulas to
+//! if no solution is found, they run a Boolean Set Cover on the set of LTL formulas to
 //! find a solution.
 //!
 //! This module contains the following meta-algorithms:
 //! - [Divide and conquer](self::meta)
 //!
-//! This module contains the following Boolean Synthesis algorithms:
+//! This module contains the following Boolean Set Cover algorithms:
 //! - [Set Cover](self::set_cover)
 //! - [Semantic Enumeration](self::enumeration)
 //! - [Beam Search](self::beam_search)
 //!
-//! Implementing a Boolean Synthesis for use with meta-algorithms is done via
+//! Implementing a Boolean Set Cover for use with meta-algorithms is done via
 //! the [`BoolAlgoParams`] trait.
 use std::rc::Rc;
 
@@ -36,7 +36,7 @@ pub mod enumeration;
 pub mod meta;
 pub mod set_cover;
 
-/// Abstraction for the hyperparameters of Boolean Synthesis algo, used to launch multiple runs.
+/// Abstraction for the hyperparameters of Boolean Set Cover algorithm, used to launch multiple runs.
 pub trait BoolAlgoParams {
     /// Additional info returned by a run, e.g. for collecting data for experiments.
     /// If unneeded, just use `()`.
@@ -92,7 +92,7 @@ pub(crate) fn create_initial_cache(
     target: &[bool],
 ) -> (Option<LtlFormula>, LtlCache) {
     let mut ltl_cache = LtlCache::new();
-    // Add empty line for size 0 in cache
+    // Add empty line for size 0 in cache.
     ltl_cache.new_line(0);
 
     let mut initial_line = ltl_cache.new_line(1);

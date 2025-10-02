@@ -1,4 +1,4 @@
-//! Semanting Enumration algorithm for LTL and Boolean Synthesis.
+//! Semantic Enumeration algorithm for LTL Learning and Boolean Set Cover.
 
 pub(crate) mod aux;
 

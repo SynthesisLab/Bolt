@@ -12,7 +12,7 @@ pub mod cs;
 pub mod hash;
 pub mod trace;
 
-/// Constants, either true or false
+/// Constants, either true or false.
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
 pub enum Constant {
     False,

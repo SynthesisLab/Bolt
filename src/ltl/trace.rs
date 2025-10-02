@@ -109,7 +109,7 @@ pub struct ParsedTrace {
     atomic_propositions: HashMap<String, Vec<usize>>,
 }
 
-/// Converts a vector of 0/1 ints to a CharSeq
+/// Converts a vector of 0/1 ints to a CharSeq.
 fn vec_to_cs(v: &Vec<usize>) -> CharSeq {
     v.iter()
         .map(|x| match *x {

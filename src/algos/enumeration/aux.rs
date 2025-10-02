@@ -130,7 +130,7 @@ where
                 continue;
             }
 
-            // For non-commutative operations
+            // For non-commutative operations.
             let g = apply_binary(op, f_r, f_l);
             if g.eq_target(target) {
                 return Ok(g);

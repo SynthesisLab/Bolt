@@ -158,8 +158,8 @@ impl EnumFormulaCacheLine<BoolCharac> for BeamSearchBoolCacheLine<'_> {
     }
 }
 
-// Stores a SatVec together with the hash of the corresponding Boolean formula.
-// Used when removing dominated formulas in a single  to canonicalize the entries at the end of the push round.
+// Stores a SatVec together with the hash of the corresponding boolean formula.
+// Used when removing dominated formulas in a single pass to canonicalize the entries at the end of the push round.
 #[derive(Debug, PartialEq, Eq)]
 struct PcoBoolFormula {
     pub(crate) f: BoolFormula,

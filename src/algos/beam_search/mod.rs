@@ -1,4 +1,4 @@
-//! Beam Search algorithm for Boolean Synthesis.
+//! Beam Search Algorithm for Boolean Set Cover.
 //!
 //! Bottom-up enumeration with fixed width.
 //! Implemented using a fixed-width cache ([`BeamSearchCache`])
@@ -22,7 +22,7 @@ use super::{BoolAlgoParams, meta::cache::InitialBoolCache};
 pub struct BeamSearchParams {
     /// Number of formulas to keep at each level.
     pub beam_width: usize,
-    /// Maximum enumeration size
+    /// Maximum enumeration size.
     pub max_size_bool: usize,
 }
 

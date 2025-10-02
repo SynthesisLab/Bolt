@@ -29,7 +29,7 @@ impl CharVec {
         BoolHash(h.finish() as HashType)
     }
 
-    /// Returns the characteristic vector of satisfied inputs
+    /// Returns the characteristic vector of satisfied inputs.
     pub(crate) fn satisfied(&self, target: CharVec) -> SatVec {
         assert_eq!(self.length, target.length);
         let values = (self.values & target.values) | (self.values | target.values).not();

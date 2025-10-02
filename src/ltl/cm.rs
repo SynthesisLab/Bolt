@@ -51,7 +51,7 @@ impl FromIterator<CharSeq> for CharMatrix {
     }
 }
 
-/// Helper macro to implement LTL unary operators for CharMatrix
+/// Helper macro to implement LTL unary operators for CharMatrix.
 macro_rules! op_for_cm {
     ($( $f:ident ),*) => {
         $(
@@ -63,7 +63,7 @@ macro_rules! op_for_cm {
     };
 }
 
-/// Helper macro to implement LTL binary operators for CharMatrix
+/// Helper macro to implement LTL binary operators for CharMatrix.
 macro_rules! binop_for_cm {
     ($f:ident) => {
         binop_for_cm!($f as $f);

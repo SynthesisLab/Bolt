@@ -18,7 +18,7 @@ use super::{
 /// Generic abstraction for formulas.
 ///
 /// The `Char` type parameter is the characteristic representation of the formula:
-/// characteristic matrix for LTL formula, characteristic vectors for Boolean formulas.
+/// characteristic matrix for LTL formulas, characteristic vectors for boolean formulas.
 ///
 /// `Char` is required to implement the [`Hashed`] trait, i.e. it can be converted to a hash.
 /// The `node` attribute uses this hash to implicitly store the tree structure of the formula.

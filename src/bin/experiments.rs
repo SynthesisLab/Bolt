@@ -80,8 +80,8 @@ fn get_name_time_sol<P: BoolAlgoParams + Clone>(
 struct CliArgs {
     /// Name of the .json file to read.
     input_filename: PathBuf,
-    /// Run LTL enumeration until `max_size_ltl`
-    /// before switching to boolean algorithm.
+    /// Run LTL enumeration until size `max_size_ltl`
+    /// before switching to boolean set cover algorithm.
     max_size_ltl: usize,
     /// Number of candidates to use for domination checking
     /// in the step that converts LTL formulas to boolean formulas.

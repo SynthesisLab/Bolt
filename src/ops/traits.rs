@@ -9,7 +9,7 @@ pub(crate) trait BinaryOp {
     fn apply(op: LtlBinaryOp, f1: &Self, f2: &Self) -> Self;
 }
 
-/// Whether the operator commutes
+/// Whether the operator commutes.
 pub(crate) trait Commutativity {
     fn commutes(&self) -> bool;
 }

@@ -28,7 +28,7 @@ fn test_ltl_search(instance: &str, expected: FormulaTree) {
 
     let max_size = expected.size();
 
-    // Ltl search
+    // LTL search
     let ltl_res = enum_aux(
         &mut ltl_cache,
         &instance.operators,
@@ -42,7 +42,7 @@ fn test_ltl_search(instance: &str, expected: FormulaTree) {
     assert_eq!(&v, &instance.target);
 }
 
-/// Converts an array of array of array of ints (yes)
+/// Converts an array of array of array of ints
 /// to a json string that looks like this:
 /// ```json
 /// [

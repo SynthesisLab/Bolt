@@ -48,7 +48,7 @@ pub struct InvalidUnaryOp<'a>(&'a str);
 impl<'a> TryFrom<&'a str> for LtlUnaryOp {
     type Error = InvalidUnaryOp<'a>;
 
-    /// Parse an unary LTL operator from a string.
+    /// Parse a unary LTL operator from a string.
     ///
     /// This function parses strings as follows:
     ///

@@ -11,7 +11,7 @@ use crate::{bool::cv::CharVec, ltl::cm::CharMatrix};
 use super::traits::Commutativity;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-/// Binary LTL Operators: Or, And, Until, Release, Implication and Equivalence
+/// Binary LTL Operators: Or, And, Until, Release, Implication, and Equivalence
 pub enum LtlBinaryOp {
     Or,
     And,
@@ -83,7 +83,7 @@ pub struct InvalidBinaryOp<'a>(&'a str);
 impl<'a> TryFrom<&'a str> for LtlBinaryOp {
     type Error = InvalidBinaryOp<'a>;
 
-    /// Parse an binary LTL operator from a string.
+    /// Parse a binary LTL operator from a string.
     ///
     /// This function parses strings as follows:
     ///

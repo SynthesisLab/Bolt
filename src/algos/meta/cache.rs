@@ -1,5 +1,5 @@
 //! Boolean cache used after LTL search
-//! given as input to the boolean algorithms.
+//! given as input to the boolean set cover algorithms.
 use std::{
     collections::BinaryHeap,
     hash::{Hash, Hasher},
@@ -137,24 +137,6 @@ impl InitialBoolCache {
                 }
             }
         }
-
-        // let (lines, best_sv) = (res.lines, res.best_sv);
-
-        // res.lines = lines
-        //     .into_iter()
-        //     .map(|l| {
-        //         l.into_iter()
-        //             .filter(|(_, lsv, _)| {
-        //                 best_sv[..lsv.size - 1]
-        //                     .iter()
-        //                     .flatten()
-        //                     .any(|lsv2| lsv2.dominates(lsv))
-        //             })
-        //             .collect_vec()
-        //     })
-        //     .collect();
-
-        // res.best_sv = best_sv;
 
         debug!("Creating Initial Cache: {count} formulas, {hits} cache hits");
 
@@ -378,7 +360,7 @@ mod test {
             hash: 0,
         });
 
-        // Ensure that we get min popcount first
+        // Ensure that we get min popcount first.
         assert_eq!(h.pop().unwrap().popcount, 1);
     }
 }
