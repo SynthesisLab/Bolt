@@ -1,8 +1,8 @@
-# Bolt: Blazingly Fast LTL$_f$ (and LTL) Learning
+# Bolt: Blazingly Fast $\mathsf{LTL}_f$ (and $\mathsf{LTL}$) Learning
 
-This repository contains the code accompanying the paper [*LTL$_f$ Learning Meets Boolean Set Cover*](https://arxiv.org/abs/2509.24616), by Gabriel Bathie, Nathanaël Fijalkow, Théo Matricon, Baptiste Mouillon, and Pierre Vandenhove. It provides instructions for running the code and reproducing our experimental results.
+This repository contains the code accompanying the paper [*LTLf Learning Meets Boolean Set Cover*](https://arxiv.org/abs/2509.24616), by Gabriel Bathie, Nathanaël Fijalkow, Théo Matricon, Baptiste Mouillon, and Pierre Vandenhove. It provides instructions for running the code and reproducing our experimental results.
 
-A benchmark suite for LTL$_f$ is provided in a [separate repository](https://github.com/SynthesisLab/LTLf_Learning_Benchmarks).
+A benchmark suite for $\mathsf{LTL}_f$ is provided in a [separate repository](https://github.com/SynthesisLab/LTLf_Learning_Benchmarks).
 
 ## Requirements
 To run the code, you need to have [Rust](https://www.rust-lang.org/tools/install) installed. The code can then be compiled using:
