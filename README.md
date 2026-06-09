@@ -4,6 +4,8 @@ This repository contains the code accompanying the paper [*LTLf Learning Meets B
 
 A benchmark suite for $\mathsf{LTL}_f$ is provided in a [separate repository](https://github.com/SynthesisLab/LTLf_Learning_Benchmarks).
 
+For Bolt's code adapted to $\mathsf{LTL}$ (rather that $\mathsf{LTL}_f$) formulas, with traces assumed to be lassos, see branch [`ltl_infty`](https://github.com/SynthesisLab/Bolt/tree/ltl_infty).
+
 ## Requirements
 To run the code, you need to have [Rust](https://www.rust-lang.org/tools/install) installed. The code can then be compiled using:
 ```
