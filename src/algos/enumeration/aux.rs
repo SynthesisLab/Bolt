@@ -4,7 +4,7 @@ use crate::ltl::trace::Operators;
 
 use crate::{
     cache::{EnumFormulaCache, EnumFormulaCacheLine},
-    formula::{apply_binary, apply_unary, Formula},
+    formula::{Formula, apply_binary, apply_unary},
     ops::traits::{BinaryOp, Commutativity, UnaryOp},
     traits::{EqTarget, Hashed},
 };
@@ -25,7 +25,7 @@ where
     let start_size = cache.nb_lines();
 
     debug!(
-        "Starting boolean search, start size {}, max size {}",
+        "Starting search, start size {}, max size {}",
         start_size, max_size
     );
     debug!("operators: {operators:?}");
